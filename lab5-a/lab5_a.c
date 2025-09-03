@@ -46,7 +46,6 @@ void write(int __fd, const void *__buf, int __n){
 
 void to_binary(char *bin, int dec_num, int neg, int aux){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
     char temp[33];
-    int final_binary = 0;
     
     //Passando o número de decimal pra binário independente do sinal
     int i = 0;
@@ -142,7 +141,7 @@ int main(){
             aux = 11;
         }
 
-        to_binary(bin, dec, neg, i);
+        to_binary(bin, dec, neg, aux);
     }
 
     return 0;
