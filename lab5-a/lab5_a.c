@@ -44,8 +44,8 @@ void write(int __fd, const void *__buf, int __n){
     );
 }
 
-void to_binary(char **bin, int dec_num, int neg, int number_order){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
-    char bin[33], comp_2[33];
+void to_binary(char *bin, int dec_num, int neg, int number_order){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
+    char temp[33];
     int final_binary = 0, aux = 11;
     
     if (number_order == 0){
@@ -69,7 +69,6 @@ void to_binary(char **bin, int dec_num, int neg, int number_order){ //Função p
         dec_num /= 2;
         i++;
     }
-    bin[32] = '\0';
 
     if (neg){ //Números negativos 
         //Complemento de 1
@@ -77,20 +76,23 @@ void to_binary(char **bin, int dec_num, int neg, int number_order){ //Função p
             bin[i] = (bin[i] == '0') ? '1' : '0';
         }
 
-
         //Complemento de 2
         int carry = 1;
         for (int i = 31; i >= 0; i--) {
-            if (comp_2[i] == '1' && carry == '1') {
+            if (temp[i] == '1' && carry == '1') {
                 bin[i] = '0';
                 carry = 1;
-            } else if (comp_2[i] == '0' && carry == '1') {
+            } else if (temp[i] == '0' && carry == '1') {
                 bin[i] = '1';
                 carry = 0;
             } else {
-                bin[i] = comp_2[i];
+                bin[i] = temp[i];
                 carry = 0;
             }
+        }
+        
+        for (i = 31; i > 31 - aux; i--){
+            bin[i] = temp[i]; //Passa o valor para o vetor original de acordo com o temporário
         }
     }
 }
