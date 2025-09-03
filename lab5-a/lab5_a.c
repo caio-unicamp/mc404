@@ -44,24 +44,10 @@ void write(int __fd, const void *__buf, int __n){
     );
 }
 
-void to_binary(char *bin, int dec_num, int neg, int number_order){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
+void to_binary(char *bin, int dec_num, int neg, int aux){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
     char temp[33];
-    int final_binary = 0, aux = 11;
+    int final_binary = 0;
     
-    if (number_order == 0){
-        //Pode ser até 3 bits = (7)10
-        dec_num %= 10; // Só preciso do primeiro dígito
-        aux = 3;
-    }else if (number_order == 1){
-        //Pode ser até 8 bits = (255)10
-        dec_num %= 1000; //Só preciso dos primeiros 3 dígitos
-        aux = 8;
-    }else if (number_order == 2 || number_order == 3){
-        //Pode ser até 5 bits = (31)10
-        dec_num %= 100; //Só preciso dos primeiros 2 dígitos
-        aux = 5;
-    } //Number order 4 Pode ser até 11 bits = (2047)10, ou seja, não preciso mudar nada e o aux já está inicializado com 11 bits
-
     //Passando o número de decimal pra binário independente do sinal
     int i = 0;
     while (dec_num > 0){
@@ -116,11 +102,7 @@ void hex_code(int val){ // Passa de decimal para hexadecimal
     write(1, hex, 11);
 }
 
-int bin_to_dec(char *bin_value_str, int size){
-    int dec_value = 0;
-    while (bin_value_str[size] != '0'){
-        dec_value += 1;
-    }
+void pack(int input, int start_bit, int end_bit, int *val){
     
 }
 
@@ -130,24 +112,37 @@ int main(){
     str[size] = 0;
     bin[33] = '\0';
     
-    int neg[5] = {0,0,0,0,0}; // Alocando o indicador de negativo para cada um dos 5 números
-    unsigned int final_binary = 0;
+    int neg = 0; // Alocando o indicador de negativo
     for (int i = 0; i < 5; i++){
         if (str[i*6] == '-'){ // Confere o sinal para passar a flag de negativo
-            neg[i] = 1;
+            neg = 1;         
         }
-    }
-    
-    for (int i = 0; i < 5; i++){
+
         int dec = 0;
         int aux = 1;
         while(str[i*6 + aux] >= '0' && str[i*6 + aux] <= '9'){ //Transformando strings em números
-            dec = dec*10 + (str[i]-'0');
+            dec = dec*10 + (str[i] - '0');
             i++;
             aux++;
         }
-        final_binary += to_binary(dec, neg[i], i);
 
+        if (i == 0){
+            //Pode ser até 3 bits = (7)10
+            dec %= 10; // Só preciso do primeiro dígito
+            aux = 3;
+        }else if (i == 1){
+            //Pode ser até 8 bits = (255)10
+            dec %= 1000; //Só preciso dos primeiros 3 dígitos
+            aux = 8;
+        }else if (i == 2 || i == 3){
+            //Pode ser até 5 bits = (31)10
+            dec %= 100; //Só preciso dos primeiros 2 dígitos
+            aux = 5;
+        }else{ //Number order 4 Pode ser até 11 bits = (2047)10, ou seja, não preciso mudar nada e o aux possui 11 bits
+            aux = 11;
+        }
+
+        to_binary(bin, dec, neg, i);
     }
 
     return 0;
