@@ -1,11 +1,6 @@
 #define STDIN_FD 0
 #define STDOUT_FD 1
 
-void _start(){
-    int ret_code = main();
-    exit(ret_code);
-}
-
 void exit(int code){
     __asm__ __volatile__(
         "mv a0, %0\n"
@@ -48,17 +43,17 @@ void write(int __fd, const void *__buf, int __n){
 void hex_code(int val){ // Passa de decimal para hexadecimal
     char hex[11];
     unsigned int uval = (unsigned int) val, aux;
-
+    
     hex[0] = '0';
     hex[1] = 'x';
     hex[10] = '\n';
-
+    
     for (int i = 9; i > 1; i--){
         aux = uval % 16;
         if (aux >= 10)
-            hex[i] = aux - 10 + 'A';
+        hex[i] = aux - 10 + 'A';
         else
-            hex[i] = aux + '0';
+        hex[i] = aux + '0';
         uval = uval / 16;
     }
     write(1, hex, 11);
@@ -104,4 +99,8 @@ int main(){
 
     hex_code(out); //Transformando para hexadecimal
     return 0;
+}
+void _start(){
+    int ret_code = main();
+    exit(ret_code);
 }
