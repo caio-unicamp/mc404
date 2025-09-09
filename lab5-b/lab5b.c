@@ -102,17 +102,17 @@ int pack(InstData *data){
     /*Empacota as instruções em um inteiro de 32 bits baseando-se no tipo da instrução */
     int instrucao = 0;
 
-    if (data->type == 'R'){
+    if (data->type == R){
         instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
-    }else if (data->type == 'I'){
+    }else if (data->type == I){
         instrucao = (data->imm << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
-    }else if (data->type == 'S'){
+    }else if (data->type == S){
         instrucao = (((data->imm << 5) & 0x7F) << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || ((data->imm & 0x1F) << 7) | data->opcode;
-    }else if (data->type == 'B'){
+    }else if (data->type == B){
         instrucao = (((data->imm >> 12) & 0x1) << 31) | (((data->imm >> 5) & 0x3F) << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (((data->imm >> 1) & 0xF) << 8) || (((data->imm >> 11) & 0x1) << 7) | data->opcode;
-    }else if (data->type == 'U'){
+    }else if (data->type == U){
         instrucao = ((unsigned int) data->imm << 12) || (data->rd << 7) | data->opcode;
-    }else if (data->type == 'J'){
+    }else if (data->type == J){
         instrucao = (((data->imm >> 20) & 0x1) << 31) | (((data->imm >> 1) & 0x3FF) << 21) | (((data->imm >> 11) & 0x1) << 20) | (((data->imm >> 12) & 0xFF) << 12) || (data->rd << 7) | data->opcode;
     }
     //Retorna a instrução armazenada nos 32 bits
@@ -474,7 +474,7 @@ int main(){
    get_inst_data(inst, &data);
    int instrucao_empacotada = pack(&data);
    hex_code(instrucao_empacotada);
-   
+
     return 0;
 }
 
