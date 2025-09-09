@@ -98,15 +98,8 @@ void hex_code(int val){
     write(1, hex, 11);
 }
 
-void pack(int input, int start_bit, int end_bit, int *val){
-    /* Empacota os bits necessários de `input` nas posições [start_bit..end_bit] dentro de *val.
-    A extração é a partir da representação em complemento de 2, então `input` deve ser convertido para unsigned antes do masking.
-    *val é tratado como um inteiro de 32 bits contendo o resultado parcial. */
-    unsigned int u = (unsigned int) input;
-    int tam_num = end_bit - start_bit + 1;
-    unsigned int mask = (1u << tam_num) - 1u; //Cria uma máscara com tam_num bits iguais a 1
-    unsigned int extrair = u & mask; //Isso serve para extrair apenas a quantidade de bits pedida pela ordem dos inputs 
-    *val |= (extrair << start_bit); //Salva o valor em *val, vai fazer isso até o último com o auxílio de start_bit
+int pack(InstData *data){
+    /*Empacota as instruções em um inteiro de 32 bits baseando-se no tipo da instrução */
 }
 
 // Compares the first n_char characters of two strings.
