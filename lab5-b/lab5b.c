@@ -109,16 +109,12 @@ int pack(InstData *data){
     }else if (data->type == 'S'){
         instrucao = (((data->imm << 5) & 0x7F) << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || ((data->imm & 0x1F) << 7) | data->opcode;
     }else if (data->type == 'B'){
-        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
+        instrucao = (((data->imm >> 12) & 0x1) << 31) | (((data->imm >> 5) & 0x3F) << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (((data->imm >> 1) & 0xF) << 8) || (((data->imm >> 11) & 0x1) << 7) | data->opcode;
     }else if (data->type == 'U'){
         instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'J'){
         instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }
-    
-    
-    
-    
     
 }
 
