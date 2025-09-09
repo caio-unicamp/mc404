@@ -65,6 +65,9 @@ void hex_code(int val){ // Passa de decimal para hexadecimal
 }
 
 void pack(int input, int start_bit, int end_bit, int *val){
+    /* Empacota os bits necessários de `input` nas posições [start_bit..end_bit] dentro de *val.
+    A extração é a partir da representação em complemento de 2, então `input` deve ser convertido para unsigned antes do masking.
+    *val é tratado como um inteiro de 32 bits contendo o resultado parcial. */
     unsigned int u = (unsigned int) input;
     int tam_num = end_bit - start_bit + 1;
     unsigned int mask = (1u << tam_num) - 1u;
