@@ -103,17 +103,17 @@ int pack(InstData *data){
     int instrucao = 0;
 
     if (data->type == 'R'){
-
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'I'){
-        
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'S'){
-        
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'B'){
-        
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'U'){
-        
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }else if (data->type == 'J'){
-        
+        instrucao = (data->funct7 << 25) | (data->rs2 << 20) | (data->rs1 << 15) | (data->funct3 << 12) || (data->rd << 7) | data->opcode;
     }
     
     
