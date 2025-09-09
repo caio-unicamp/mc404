@@ -44,43 +44,6 @@ void write(int __fd, const void *__buf, int __n){
     );
 }
 
-void to_binary(char *bin, int dec_num, int neg, int aux){ //Função pra transformar um decimal em binário considerando sinal e passando apenas com o número de bits referente a cada ordem que o número aparece
-    char temp[33];
-    
-    //Passando o número de decimal pra binário independente do sinal
-    int i = 0;
-    while (dec_num > 0){
-        bin[i] = dec_num % 2 + '0'; //Salvando em ordem da esquerda pra direita e transformando o bit em string de número
-        dec_num /= 2;
-        i++;
-    }
-
-    if (neg){ //Números negativos 
-        //Complemento de 1
-        for (int i = 0; i < 33; i++) {
-            bin[i] = (bin[i] == '0') ? '1' : '0';
-        }
-
-        //Complemento de 2
-        int carry = 1;
-        for (int i = 31; i >= 0; i--) {
-            if (temp[i] == '1' && carry == '1') {
-                bin[i] = '0';
-                carry = 1;
-            } else if (temp[i] == '0' && carry == '1') {
-                bin[i] = '1';
-                carry = 0;
-            } else {
-                bin[i] = temp[i];
-                carry = 0;
-            }
-        }
-        
-        for (i = 31; i > 31 - aux; i--){
-            bin[i] = temp[i]; //Passa o valor para o vetor original de acordo com o temporário
-        }
-    }
-}
 
 void hex_code(int val){ // Passa de decimal para hexadecimal
     char hex[11];
