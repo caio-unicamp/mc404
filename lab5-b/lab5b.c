@@ -115,7 +115,8 @@ int pack(InstData *data){
     }else if (data->type == 'J'){
         instrucao = (((data->imm >> 20) & 0x1) << 31) | (((data->imm >> 1) & 0x3FF) << 21) | (((data->imm >> 11) & 0x1) << 20) | (((data->imm >> 12) & 0xFF) << 12) || (data->rd << 7) | data->opcode;
     }
-    
+    //Retorna a instrução armazenada nos 32 bits
+    return instrucao;
 }
 
 // Compares the first n_char characters of two strings.
@@ -466,6 +467,11 @@ int main(){
         of a RISC-V instruction on a single int variable, paying attention to each instruction's
         particularities and print the final result using the hex_code function.
     */
+   char inst[41];
+   InstData data;
+
+   read(0, inst, 40);
+   get_inst_data(inst, &data);
     return 0;
 }
 
