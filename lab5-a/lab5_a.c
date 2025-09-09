@@ -85,15 +85,16 @@ int main(){
         int offset = i*6;
         int neg = (str[offset] == '-'); // Alocando o indicador de negativo
         int dec = 0;
-        for (int j = 0; j <= 4; j++){
+        for (int j = 1; j <= 4; j++){
             dec = dec*10 + (str[offset + j] - '0'); //Transformando strings em números
         }
         
         if (neg){
-            dec = -dec;
+            dec = -dec; //Como apenas transformei a string pura em número, falta verificar se é negativo e alocar o sinal
         }
         nums[i] = dec; //Salva numa lista a cada iteração na ordem dos números lidos
     }
+    //Salvando o valor ou por meio da função pack
     int out = 0;
     pack(nums[0],  0,  2, &out);  // 3 LSB
     pack(nums[1],  3, 10, &out);  // 8 LSB
@@ -101,6 +102,6 @@ int main(){
     pack(nums[3], 16, 20, &out);  // 5 LSB
     pack(nums[4], 21, 31, &out);  // 11 LSB
 
-    hex_code(out);
+    hex_code(out); //Transformando para hexadecimal
     return 0;
 }
