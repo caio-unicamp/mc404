@@ -72,7 +72,7 @@ void pack(int input, int start_bit, int end_bit, int *val){
     int tam_num = end_bit - start_bit + 1;
     unsigned int mask = (1u << tam_num) - 1u; //Cria uma máscara com tam_num bits iguais a 1
     unsigned int extrair = u & mask; //Isso serve para extrair apenas a quantidade de bits pedida pela ordem dos inputs 
-    *val |= extrair << start_bit; //Salva o valor em *val, vai fazer isso até o último com o auxílio de start_bit
+    *val |= (extrair << start_bit); //Salva o valor em *val, vai fazer isso até o último com o auxílio de start_bit
 }
 
 int main(){
