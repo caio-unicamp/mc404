@@ -72,47 +72,35 @@ void pack(int input, int start_bit, int end_bit, int *val){
     int tam_num = end_bit - start_bit + 1;
     unsigned int mask = (1u << tam_num) - 1u; //Cria uma máscara com tam_num bits iguais a 1
     unsigned int extrair = u & mask; //Isso serve para extrair apenas a quantidade de bits pedida pela ordem dos inputs 
-    *val |= extrair << start_bit; //Salva o valor binário na lista *val, vai fazer isso até o último com o auxílio de start_bit
+    *val |= extrair << start_bit; //Salva o valor em *val, vai fazer isso até o último com o auxílio de start_bit
 }
 
 int main(){
-    char str[30], bin[33];
+    char str[31];
     int size = read(STDIN_FD, str, 30);
     str[size] = 0;
-    bin[33] = '\0';
     
-    int neg = 0; // Alocando o indicador de negativo
+    int nums[5];
     for (int i = 0; i < 5; i++){
-        if (str[i*6] == '-'){ // Confere o sinal para passar a flag de negativo
-            neg = 1;         
-        }
-
+        int offset = i*6;
+        int neg = (str[offset] == '-'); // Alocando o indicador de negativo
         int dec = 0;
-        int aux = 1;
-        while(str[i*6 + aux] >= '0' && str[i*6 + aux] <= '9'){ //Transformando strings em números
-            dec = dec*10 + (str[i] - '0');
-            i++;
-            aux++;
+        for (int j = 0; j <= 4; j++){
+            dec = dec*10 + (str[offset + j] - '0'); //Transformando strings em números
         }
-
-        if (i == 0){
-            //Pode ser até 3 bits = (7)10
-            dec %= 10; // Só preciso do primeiro dígito
-            aux = 3;
-        }else if (i == 1){
-            //Pode ser até 8 bits = (255)10
-            dec %= 1000; //Só preciso dos primeiros 3 dígitos
-            aux = 8;
-        }else if (i == 2 || i == 3){
-            //Pode ser até 5 bits = (31)10
-            dec %= 100; //Só preciso dos primeiros 2 dígitos
-            aux = 5;
-        }else{ //Number order 4 Pode ser até 11 bits = (2047)10, ou seja, não preciso mudar nada e o aux possui 11 bits
-            aux = 11;
+        
+        if (neg){
+            dec = -dec;
         }
-
-        to_binary(bin, dec, neg, aux);
+        nums[i] = dec; //Salva numa lista a cada iteração na ordem dos números lidos
     }
+    int out = 0;
+    pack(nums[0],  0,  2, &out);  // 3 LSB
+    pack(nums[1],  3, 10, &out);  // 8 LSB
+    pack(nums[2], 11, 15, &out);  // 5 LSB
+    pack(nums[3], 16, 20, &out);  // 5 LSB
+    pack(nums[4], 21, 31, &out);  // 11 LSB
 
+    hex_code(out);
     return 0;
 }
