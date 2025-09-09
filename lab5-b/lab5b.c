@@ -100,6 +100,26 @@ void hex_code(int val){
 
 int pack(InstData *data){
     /*Empacota as instruções em um inteiro de 32 bits baseando-se no tipo da instrução */
+    int instrucao = 0;
+
+    if (data->type == 'R'){
+
+    }else if (data->type == 'I'){
+        
+    }else if (data->type == 'S'){
+        
+    }else if (data->type == 'B'){
+        
+    }else if (data->type == 'U'){
+        
+    }else if (data->type == 'J'){
+        
+    }
+    
+    
+    
+    
+    
 }
 
 // Compares the first n_char characters of two strings.
