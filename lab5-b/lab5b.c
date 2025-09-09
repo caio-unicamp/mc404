@@ -472,6 +472,9 @@ int main(){
 
    read(0, inst, 40);
    get_inst_data(inst, &data);
+   int instrucao_empacotada = pack(&data);
+   hex_code(instrucao_empacotada);
+   
     return 0;
 }
 
