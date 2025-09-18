@@ -44,20 +44,19 @@ loop_leitura:
 # Salva no registrador com o valor do número atual e pula para efetuar o algoritmo da raíz
 salva_s1:
     mv s1, t3   # Salva o auxiliar no registrador s1
+    mv t6, s1   
 
-    li t3, 1
-    add a3, a3, t3 # a3 += 1 para saber em qual número está
+    addi a3, a3, 1 # a3 += 1 para saber em qual número está
 
     li t3, 2    # t3 = 2
-    div t2, s1, t3  # Inicializa o auxiliar como o número dividido por 2, t2 = k = num/2
+    div t2, t6, t3  # Inicializa o auxiliar como o número dividido por 2, t2 = k = num/2
 
 # Calcula a raiz quadrada usando método babilônico
 raiz:   
-    div t0, s1, t2  # Divide num por k, t0 = num/k
+    div t0, t6, t2  # Divide num por k, t0 = num/k
     add t0, t2, t0 # Soma k com (num/k), t0 = k + (num/k)
     div t2, t0, t3  # Divide por 2, t2 = (k + (num/k))/2 = aux
 
-    mv s1, t2   # k = aux
     
     addi a4, a4, -1 # Subtrai o contador de iterações: 10 >= a4 >=1
 
@@ -67,12 +66,14 @@ raiz:
     j raiz  # Enquanto o t4 não for zero, volta a aplicar o algoritmo
 
 printar:
+    mv s1, t2   # Salva o valor da raíz aproximada em s1
+    
     li t0, 1000 
     div t1, s1, t0  # Pega o primeiro dígito e salva no t1
     rem t2, s1, t0  # Pega o resto da divisão por 1000 e salva em t2
     mv s1, t2   # Salva o resto da divisão por 1000 em s1
 
-    add t1, t1, '0' # Transforma dígito em string
+    addi t1, t1, '0' # Transforma dígito em string
     sb t1, 0(a5)    # Coloca no primeiro byte de a5
 
     li t0, 100 
@@ -80,7 +81,7 @@ printar:
     rem t2, s1, t0  # Pega o resto da divisão por 100 e salva em t2
     mv s1, t2   # Salva o resto da divisão por 100 em s1
 
-    add t1, t1, '0' # Transforma dígito em string
+    addi t1, t1, '0' # Transforma dígito em string
     sb t1, 1(a5)    # Coloca no segundo byte de a5
     
     li t0, 10
@@ -88,10 +89,10 @@ printar:
     rem t2, s1, t0  # Pega o resto da divisão por 10 e salva no t2
     mv s1, t2   # Salva o resto da divisão por 10 em s1
 
-    add t1, t1, '0' # Transforma dígito em string
+    addi t1, t1, '0' # Transforma dígito em string
     sb t1, 2(a5)    # Coloca no terceiro byte de a5
     
-    add s1, s1, '0' # Transforma o último dígito em string
+    addi s1, s1, '0' # Transforma o último dígito em string
     sb s1, 3(a5)    # Coloca no quarto byte
 
     # O 5º byte já foi armazenado quando foi perguntado se ele era \n ou ' '
@@ -102,10 +103,8 @@ printar:
     li a7, 64           # syscall write (64)
     ecall
 
-    # addi s3, s3, 5  # Move o ponteiro
-
     li t0, 4
-    # li t3, 0    # Reseta o valor do registrador t3 para 0 para realizar a nova leitura  
+    li t3, 0    # Reinicia o valor de leitura
     bne a3, t0, loop_leitura # Enquanto não for o último número continua a leitura
 
 # Caso tenha sido o último número segue para o fim da função
