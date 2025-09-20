@@ -8,7 +8,7 @@
 _start:
     li t1, 0    # Fará mudança de str pra int
     li a5, 12    # Flag pra dizer em que linha está a partir do tamanho da leitura
-    li a4, 1    # Flag pra dizer em que número
+    li a4, 0    # Flag pra dizer em que número
     la a3, buf_output_in1   # Ponteiro pra primeira leitura
 
 read:
@@ -43,9 +43,44 @@ str_to_int:
     j str_to_int    # Continua a passagem 
 
 prox_num:
+    addi a4, a4, 1
     addi a3, 1  # Segue para o próximo caractere
+    # Analisa em que número está para salvar no registrador correto
+    beq a3, 1, salva_yb
+    beq a3, 2, salva_xc
+    beq a3, 3, salva_ta
+    beq a3, 4, salva_tb
+    beq a3, 5, salva_tc
+    beq a3, 6, salva_tr
 
+salva_yb:   # O valor de Yb está em s1
     mv s1, t1   # Salva o valor temporário em um registrador
+    
+    li t1, 0    # Reseta o valor que será salvo
+    j str_to_int    # Volta para passar de str pra int
+salva_xc:   # O valor de Xc está em s2
+    mv s2, t1
+
+    li t1, 0    # Reseta o valor que será salvo
+    j str_to_int    # Volta para passar de str pra int
+salva_ta:   # O valor de Ta está em s4
+    mv s4, t1
+
+    li t1, 0    # Reseta o valor que será salvo
+    j str_to_int    # Volta para passar de str pra int
+salva_tb:   # O valor de Tb está em s5
+    mv s5, t1
+
+    li t1, 0    # Reseta o valor que será salvo
+    j str_to_int    # Volta para passar de str pra int
+salva_tc:   # O valor de Tc está em s6
+    mv s6, t1
+
+    li t1, 0    # Reseta o valor que será salvo
+    j str_to_int    # Volta para passar de str pra int
+salva_tr:   # O valor de Tr
+    mv s7, t1
+
     li t1, 0    # Reseta o valor que será salvo
     j str_to_int    # Volta para passar de str pra int
 
