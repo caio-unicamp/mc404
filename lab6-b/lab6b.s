@@ -43,15 +43,19 @@ str_to_int:
     j str_to_int    # Continua a passagem 
 
 prox_num:
-    addi a4, a4, 1
+    addi a4, a4, 1  # Adiciona 1 pra dizeer em que número está
     addi a3, 1  # Segue para o próximo caractere
     # Analisa em que número está para salvar no registrador correto
-    beq a3, 1, salva_yb
-    beq a3, 2, salva_xc
-    beq a3, 3, salva_ta
-    beq a3, 4, salva_tb
-    beq a3, 5, salva_tc
-    beq a3, 6, salva_tr
+    beq a4, 1, salva_yb
+    beq a4, 3, salva_ta
+    beq a4, 4, salva_tb
+    beq a4, 5, salva_tc
+
+prox_linha:
+    beq a5, 20, salva_tr # Se foi pra próxima linha e o buffer é de tamanho 20 salva a última variável
+
+    addi a4, a4, 1  # a4 = 2 (2º número)
+    j salva_xc  # Salva o valor de xc 
 
 salva_yb:   # O valor de Yb está em s1
     mv s1, t1   # Salva o valor temporário em um registrador
@@ -61,8 +65,11 @@ salva_yb:   # O valor de Yb está em s1
 salva_xc:   # O valor de Xc está em s2
     mv s2, t1
 
+    li a5, 20   # Muda o tamanho para a próxima leitura de linha
+    la a3, buf_input2   # Carrega o buffer pro segundo input
+
     li t1, 0    # Reseta o valor que será salvo
-    j str_to_int    # Volta para passar de str pra int
+    j read    # Volta para ler a nova linha
 salva_ta:   # O valor de Ta está em s4
     mv s4, t1
 
@@ -88,11 +95,6 @@ negativo:
     li t3, -1   # t3 diz o sinal
     j str_to_int    # Começa a passar de str pra int de acordo com o sinal
 
-prox_linha:
-    beq a5, 20, fim # Se foi pra próxima linha e o buffer é de tamanho 20 está no final
-
-    li a5, 20   # Caso não seja, muda o tamanho para a próxima leitura
-    la a3, buf_input2   # Carrega o buffer pro segundo input
 print:
     la a3, buf_output_in1   # Carrega o buffer para o print
     mv s3, a3   # Movimenta o print byte a bytey
