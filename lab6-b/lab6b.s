@@ -142,7 +142,7 @@ arredonda_dist_neg_s6:
     sub s6, s6, t6
 arredonda_dist_s6:
     div s6, s6, t0
-    
+
     # Como em nenhum momento é usado as distâncias simples, salva o quadrado delas
     mul s4, s4, s4  # dA² está em s4
     mul s5, s5, s5  # dB² está em s5
@@ -155,8 +155,18 @@ calculos:   # Aplica os cálculos da coordenada
     add s8, s8, s4  # dA² + Yb² 
     sub s8, s8, s5  # dA² + Yb² - dB²
 
-    div s8, s8, t1
-    div s8, s8, s1
+    mul t5, s1, t1  # t5 = denom = 2Yb
+
+    div t6, t5, t1
+
+    blt t5, x0, arredonda_y_neg
+    add s8, s8, t6
+    j divisao_y
+arredonda_y_neg:
+    sub s8, s8, t6
+divisao_y:
+    div s8, s8, t5  # y = (dA² + Yb² - dB²)/2Yb
+
     # Os passos abaixo calculam x² = dA² - y² que ficará salvo em s9
     mul s9, s8, s8
     li t1, -1
