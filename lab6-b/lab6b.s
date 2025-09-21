@@ -79,33 +79,40 @@ salva_xc:   # O valor de Xc está em s2
     j read    # Volta para ler a nova linha
 salva_ta:   # O valor de Ta está em s4
     mv s4, t1
-    # dA = c*Ta
-    li t1, 30
-    mul s4, s4, t1  # Salva agora dA em s4
-
+    
     li t1, 0    # Reseta o valor que será salvo para a próxima variável
     j str_to_int    # Volta para passar de str pra int
 salva_tb:   # O valor de Tb está em s5
     mv s5, t1
-    # dB = c*Tb
-    li t1, 30
-    mul s5, s5, t1  # Salva agora dB em s5
-
+    
     li t1, 0    # Reseta o valor que será salvo
     j str_to_int    # Volta para passar de str pra int
 salva_tc:   # O valor de Tc está em s6
     mv s6, t1
-    # dC = c*Tc
-    li t1, 30
-    mul s6, s6, t1  # Salva agora dC em s6
     
     li t1, 0    # Reseta o valor que será salvo
     j str_to_int    # Volta para passar de str pra int
 salva_tr:   # O valor de Tr está em s7
     mv s7, t1
 
-calculos:   # Aplica os cálculos da coordenada
+    sub s4, s7, s4  # Ta medido = Tr - Ta
+    sub s5, s7, s5  # Tb medido = Tr - Tb
+    sub s6, s7, s6  # Tc medido = Tr - Tc
 
+    # Salva agora as distâncias em vez dos tempos usando c = 3*10^8 m/s e sabendo que os tempos estão em ns
+    li t1, 3
+    mul s4, s4, t1
+    mul s5, s5, t1
+    mul s6, s6, t1
+
+    li t1, 10
+    div s4, s4, t1
+    div s5, s5, t1
+    div s6, s6, t1
+
+
+calculos:   # Aplica os cálculos da coordenada
+    
 
 negativo:
     li t3, -1   # t3 diz o sinal
