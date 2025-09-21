@@ -110,13 +110,23 @@ salva_tr:   # O valor de Tr está em s7
     div s5, s5, t1
     div s6, s6, t1
     # Como em nenhum momento é usado as distâncias simples, salva o quadrado delas
-    mul s4, s4, s4 
-    mul s5, s5, s5
-    mul s6, s6, s6
+    mul s4, s4, s4  # dA² está em s4
+    mul s5, s5, s5  # dB² está em s5
+    mul s6, s6, s6  # dC² está em s6
 
 calculos:   # Aplica os cálculos da coordenada
-    
-
+    # Os passos abaixo calculam y = (dA² + Yb² - dB²)/2Yb que ficará salvo em s8
+    li t1, 2
+    mul s8, s1, s1
+    add s8, s8, s4
+    sub s8, s8, s5
+    div s8, s8, t1
+    div s8, s8, s1
+    # Os passos abaixo calculam x² = dA² - y² que ficará salvo em s9
+    mul s9, s8, s8
+    li t1, -1
+    mul s9, s8, t1
+    add s9, s9, s4
 negativo:
     li t3, -1   # t3 diz o sinal
     j str_to_int    # Começa a passar de str pra int de acordo com o sinal
