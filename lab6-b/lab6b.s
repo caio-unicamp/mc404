@@ -29,7 +29,7 @@ read:
 
 str_to_int:
     lb t0, 0(a3)    # Pega o caractere atual da string 
-    beqz t0, prox_num    
+    beq t0, ' ', prox_num    
     beq t0, '\n', prox_linha  # se for '\n' vai pra prox linha
 
     addi t0, t0, -'0'   # Muda de str pra int
@@ -45,6 +45,7 @@ str_to_int:
 prox_num:
     addi a4, a4, 1  # Adiciona 1 pra dizeer em que número está
     addi a3, 1  # Segue para o próximo caractere
+
     # Analisa em que número está para salvar no registrador correto
     beq a4, 1, salva_yb
     beq a4, 3, salva_ta
@@ -61,6 +62,12 @@ salva_yb:   # O valor de Yb está em s1
     mv s1, t1   # Salva o valor temporário em um registrador
     
     li t1, 0    # Reseta o valor que será salvo
+
+    lb t3, 0(a3)    # Salva o sinal do segundo número
+    addi a3, a3, 1  # Começa leitura do Xc
+    beq t3, '-', negativo   # Se o número for negativo muda o sinal dele
+
+    li t3, 1    # Se não for negativo apenas passa como positivo
     j str_to_int    # Volta para passar de str pra int
 salva_xc:   # O valor de Xc está em s2
     mv s2, t1
@@ -85,11 +92,11 @@ salva_tc:   # O valor de Tc está em s6
 
     li t1, 0    # Reseta o valor que será salvo
     j str_to_int    # Volta para passar de str pra int
-salva_tr:   # O valor de Tr
+salva_tr:   # O valor de Tr está em s7
     mv s7, t1
 
-    li t1, 0    # Reseta o valor que será salvo
-    j str_to_int    # Volta para passar de str pra int
+calculos:   # Aplica os cálculos da coordenada
+
 
 negativo:
     li t3, -1   # t3 diz o sinal
