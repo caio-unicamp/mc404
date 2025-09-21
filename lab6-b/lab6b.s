@@ -112,37 +112,14 @@ salva_tr:   # O valor de Tr está em s7
     # Salva agora as distâncias em vez dos tempos usando c = 3*10^8 m/s e sabendo que os tempos estão em ns
     li t1, 3
     mul s4, s4, t1
-
-    li t0, 10
-    li t6, 5
-    blt s4, x0, arredonda_dist_neg_s4
-    add s4, s4, t6
-    j arredonda_dist_s4
-arredonda_dist_neg_s4:
-    sub s4, s4, t6
-arredonda_dist_s4:
-    div s4, s4, t0
-
+    
     mul s5, s5, t1
-
-    blt s5, x0, arredonda_dist_neg_s5
-    add s5, s5, t6
-    j arredonda_dist_s5
-arredonda_dist_neg_s5:
-    sub s5, s5, t6
-arredonda_dist_s5:
-    div s5, s5, t0
-
     mul s6, s6, t1
 
-    blt s6, x0, arredonda_dist_neg_s6
-    add s6, s6, t6
-    j arredonda_dist_s6
-arredonda_dist_neg_s6:
-    sub s6, s6, t6
-arredonda_dist_s6:
-    div s6, s6, t0
-
+    li t1, 10
+    div s4, s4, t1
+    div s5, s5, t1
+    div s6, s6, t1
     # Como em nenhum momento é usado as distâncias simples, salva o quadrado delas
     mul s4, s4, s4  # dA² está em s4
     mul s5, s5, s5  # dB² está em s5
@@ -155,23 +132,13 @@ calculos:   # Aplica os cálculos da coordenada
     add s8, s8, s4  # dA² + Yb² 
     sub s8, s8, s5  # dA² + Yb² - dB²
 
-    mul t5, s1, t1  # t5 = denom = 2Yb
-
-    div t6, t5, t1
-
-    blt t5, x0, arredonda_y_neg
-    add s8, s8, t6
-    j divisao_y
-arredonda_y_neg:
-    sub s8, s8, t6
-divisao_y:
-    div s8, s8, t5  # y = (dA² + Yb² - dB²)/2Yb
-
+    div s8, s8, t1
+    div s8, s8, s1
     # Os passos abaixo calculam x² = dA² - y² que ficará salvo em s9
-    mul s9, s8, s8
+    mul s9, s8, s8  # s9 = y²
     li t1, -1
-    mul s9, s8, t1
-    add s9, s9, s4
+    mul s9, s9, t1  # s9 = -y²
+    add s9, s9, s4  # s9 = dA² - y²
     mv t3, s9   # Auxiliar para as iterações da raiz
 
     li a1, 21   # Números de iterações pro cálculo da raiz
@@ -204,8 +171,9 @@ escolha:    # Escolhe qual a melhor raíz para o x, a positiva ou a negativa
     mul t3, s8, s8  # y²
     add t2, t2, t3  # (x - xc)² + y²
     sub t2, t2, s6  # (x - xc)² + y² - dC²
-    mul t2, t2, t2  # ((x - xc)² + y² - dC²)²
-
+    bgez t2, err_pos_abs
+    neg t2, t2  # t2 = abs(erro_pos)
+err_pos_abs:
     # Os passos abaixo calculam o erro quadrático em relação a dC para a raíz negativa -((x-Xc)² + y²) que será salvo em t4
     li t5, -1
     mul s10, s9, t5 # Salva o valor da raíz negativa
@@ -214,46 +182,58 @@ escolha:    # Escolhe qual a melhor raíz para o x, a positiva ou a negativa
     # t3 já é y²
     add t4, t4, t3  # (x - xc)² + y²
     sub t4, t4, s6  # (x - xc)² + y² - dC²
-    mul t4, t4, t4  # ((x - xc)² + y² - dC²)²
+    bgez t4, err_neg_abs
+    neg t4, t4  # t4 = abs(err_neg)
+err_neg_abs:
 
     la a3, buf_output_in1   # Carrega o buffer para o print
     mv s3, a3   # Movimenta o print byte a bytey
 
+
+    blt t4, t2, x_negativo # if t4 < t2 precisa alterar o sinal pois a raíz mais próxima é a negativa
+
+    # Aqui x é positivo ou os erros são iguais
     li t0, '+'
-    sb t0, 0(s3)    # Se continuar assim já salvou o primeiro byte como positivo pra raíz negativa
+    sb t0, 0(s3)    
+    mv t5, s9
+    j print_x
 
-    blt t2, t4, print_x # if t2 < t4 não precisa alterar o sinal pois a raíz mais próxima é a positiva
-
+x_negativo:
     li t0, '-'
     sb t0, 0(s3)    # Caso contrário, salva o primeiro byte como - pra dizer que o número é negativo
+    mv t5, s10
 
 print_x:
+    bgez t5, print_x_abs    # Se t5 já é positivo ignora
+    neg t5, t5  # Senão, torna-o positivo
+
+print_x_abs:
     li t0, 1000
-    div t1, s9, t0  # Salva o primeiro dígito de x em t1
-    rem t2, s9, t0  # Salva o resto da divisão por 1000 em t2
-    mv s9, t2   # Salva o valor do resto de novo em s9
+    div t1, t5, t0  # Salva o primeiro dígito de x em t1
+    rem t2, t5, t0  # Salva o resto da divisão por 1000 em t2
+    mv t5, t2   # Salva o valor do resto de novo em t5
 
     addi t1, t1, '0'    # Transforma o primeiro dígito em string
     sb t1, 1(s3)    # Coloca no segundo byte do buffer
 
     li t0, 100
-    div t1, s9, t0  # Salva o segundo dígito de x em t1
-    rem t2, s9, t0  # Salva o resto da divisão por 100 em t2
-    mv s9, t2   # Salva o valor do resto de novo em s9
+    div t1, t5, t0  # Salva o segundo dígito de x em t1
+    rem t2, t5, t0  # Salva o resto da divisão por 100 em t2
+    mv t5, t2   # Salva o valor do resto de novo em t5
 
     addi t1, t1, '0'    # Transforma o segundo dígito em string
     sb t1, 2(s3)    # Coloca no terceiro byte do buffer
 
     li t0, 10
-    div t1, s9, t0  # Salva o terceiro dígito de x em t1
-    rem t2, s9, t0  # Salva o resto da divisão por 10 em t2
-    mv s9, t2   # Salva o valor do resto de novo em s9
+    div t1, t5, t0  # Salva o terceiro dígito de x em t1
+    rem t2, t5, t0  # Salva o resto da divisão por 10 em t2
+    mv t5, t2   # Salva o valor do resto de novo em t5
 
     addi t1, t1, '0'    # Transforma o terceiro dígito em string
     sb t1, 3(s3)    # Coloca no quarto byte do buffer
 
-    addi s9, s9, '0'    # Transforma o último dígito de x em string
-    sb s9, 4(s3)    # Coloca no quinto byte do buffer
+    addi t5, t5, '0'    # Transforma o último dígito de x em string
+    sb t5, 4(s3)    # Coloca no quinto byte do buffer
 
     li t0, ' '
     sb t0, 5(s3)    # Formatação correta com espaço entre x e y
