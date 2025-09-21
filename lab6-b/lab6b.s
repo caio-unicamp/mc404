@@ -112,13 +112,37 @@ salva_tr:   # O valor de Tr está em s7
     # Salva agora as distâncias em vez dos tempos usando c = 3*10^8 m/s e sabendo que os tempos estão em ns
     li t1, 3
     mul s4, s4, t1
+
+    li t0, 10
+    li t6, 5
+    blt s4, x0, arredonda_dist_neg_s4
+    add s4, s4, t6
+    j arredonda_dist_s4
+arredonda_dist_neg_s4:
+    sub s4, s4, t6
+arredonda_dist_s4:
+    div s4, s4, t0
+
     mul s5, s5, t1
+
+    blt s5, x0, arredonda_dist_neg_s5
+    add s5, s5, t6
+    j arredonda_dist_s5
+arredonda_dist_neg_s5:
+    sub s5, s5, t6
+arredonda_dist_s5:
+    div s5, s5, t0
+
     mul s6, s6, t1
 
-    li t1, 10
-    div s4, s4, t1
-    div s5, s5, t1
-    div s6, s6, t1
+    blt s6, x0, arredonda_dist_neg_s6
+    add s6, s6, t6
+    j arredonda_dist_s6
+arredonda_dist_neg_s6:
+    sub s6, s6, t6
+arredonda_dist_s6:
+    div s6, s6, t0
+    
     # Como em nenhum momento é usado as distâncias simples, salva o quadrado delas
     mul s4, s4, s4  # dA² está em s4
     mul s5, s5, s5  # dB² está em s5
