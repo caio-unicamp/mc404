@@ -109,7 +109,10 @@ salva_tr:   # O valor de Tr está em s7
     div s4, s4, t1
     div s5, s5, t1
     div s6, s6, t1
-
+    # Como em nenhum momento é usado as distâncias simples, salva o quadrado delas
+    mul s4, s4, s4 
+    mul s5, s5, s5
+    mul s6, s6, s6
 
 calculos:   # Aplica os cálculos da coordenada
     
