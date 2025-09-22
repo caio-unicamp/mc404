@@ -171,6 +171,12 @@ confere_paridade:
     li s11, 0   # Se chegou até aqui não há erro de decodificação
 
 print_linha_2:
+    # Transformando de int pra str
+    addi s1, s1, '0'
+    addi s2, s2, '0'
+    addi s3, s3, '0'
+    addi s4, s4, '0'
+    # Salvando os bytes no buffer de output
     sb s1, 0(a4)    #d1
     sb s2, 1(a4)    #d2
     sb s3, 2(a4)    #d3
@@ -179,6 +185,7 @@ print_linha_2:
     li t0, '\n'
     sb t0, 4(a4)
     # Bit que indica se houve erro
+    addi s11, s11, '0'  # Transformando de inteiro pra str  
     sb s11, 5(a4)
     # Quebra de linha final
     sb t0, 6(a4)
