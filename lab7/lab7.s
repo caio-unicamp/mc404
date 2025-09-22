@@ -78,7 +78,7 @@ parity: # Salva o bit de paridade sendo 1 caso a soma dos dígitos referentes fo
     xor s7, s2, t0  # Analisa d2 xor (d3 xor d4)
 
     li t0, 1
-    beq a5, t0, confere_paridade   # Se já tá na segunda linha (0-indexado) parte para a conferência de paridade 
+    beq a5, t0, confere_paridade   # Se já está na segunda linha (0-indexado) parte para a conferência de paridade 
     # Caso contrário printa a primeira linha
 
 print_linha_1:  
@@ -127,25 +127,25 @@ read_linha_2:
     addi t1, t1, -'0'   # Mudança de str pra int
 
     li t0, 1
-    beq a3, t0, salva_p1
+    beq a3, t0, salva_p1    # Se estiver no primeiro dígito salva p1
 
     li t0, 2
-    beq a3, t0, salva_p2
+    beq a3, t0, salva_p2    # Se estiver no segundo dígito salva p2
 
     li t0, 3
-    beq a3, t0, salva_d1
+    beq a3, t0, salva_d1    # Se estiver no terceiro dígito salva d1
 
     li t0, 4
-    beq a3, t0, salva_p3
+    beq a3, t0, salva_p3    # Se estiver no quarto dígito salva p3
 
     li t0, 5
-    beq a3, t0, salva_d2
+    beq a3, t0, salva_d2    # Se estiver no quinto dígito salva d2
 
     li t0, 6
-    beq a3, t0, salva_d3
+    beq a3, t0, salva_d3    # Se estiver no sexto dígito salva d3
 
     li t0, 7
-    beq a3, t0, salva_d4
+    beq a3, t0, salva_d4    # Se estiver no sétimo dígito salva d4
 
 salva_p1:   # Salva o valor escrito de p1 em s8
     mv s8, t1
@@ -171,17 +171,17 @@ confere_paridade:
     li s11, 0   # Se chegou até aqui não há erro de decodificação
 
 print_linha_2:
-    lb s1, 0(a4)    #d1
-    lb s2, 1(a4)    #d2
-    lb s3, 2(a4)    #d3
-    lb s4, 3(a4)    #d4
+    sb s1, 0(a4)    #d1
+    sb s2, 1(a4)    #d2
+    sb s3, 2(a4)    #d3
+    sb s4, 3(a4)    #d4
     # Quebra de linha entre a segunda linha e a primeira
     li t0, '\n'
-    lb t0, 4(a4)
+    sb t0, 4(a4)
     # Bit que indica se houve erro
-    lb s11, 5(a4)
+    sb s11, 5(a4)
     # Quebra de linha final
-    lb t0, 6(a4)
+    sb t0, 6(a4)
 
     li a0, 1    # file descriptor stdout = 1
     mv a1, a4   # Buffer pros últimos prints
