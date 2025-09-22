@@ -17,12 +17,14 @@ read_linha_1:
     li a7, 63   # Syscall read 63
     ecall
 
+    lbu t1, buf_input   # Caractere lido em t1
+
     li t0, '\n'
-    beq a1, t0, parity  # Se leu um \n começa a conferir a paridade dos bits
+    beq t1, t0, parity  # Se leu um \n começa a conferir a paridade dos bits
 
     addi a3, a3, 1  # Indica em qual dígito de leitura está
 
-    addi a1, a1, -'0'   # Mudança de str pra int
+    addi t1, t1, -'0'   # Mudança de str pra int
 
     li t0, 1
     beq a3, t0, salva_d1   # Se estiver no primeiro dígito salva d1
@@ -36,33 +38,34 @@ read_linha_1:
     j salva_d4  # Se chegou até aqui está no último dígito
 
 salva_d1:   # d1 está em s1
-    mv s1, a1
+    mv s1, t1
 
     li t0, 1
-    beq a5, read_linha_2
+    beq a5, t0, read_linha_2
     
     j read_linha_1
 salva_d2:   # d2 está em s2
-    mv s2, a1
+    mv s2, t1
     
     li t0, 1
-    beq a5, read_linha_2
+    beq a5, t0, read_linha_2
 
     j read_linha_1
 salva_d3:   # d3 está em s3
-    mv s3, a1
+    mv s3, t1
     
     li t0, 1
-    beq a5, read_linha_2
+    beq a5, t0, read_linha_2
 
     j read_linha_1
 salva_d4:   # d4 está em s4
-    mv s4, a1
+    mv s4, t1
     
     li t0, 1
-    beq a5, read_linha_2
+    beq a5, t0, read_linha_2
 
     j read_linha_1
+
 parity: # Salva o bit de paridade sendo 1 caso a soma dos dígitos referentes for ímpar e 0 caso contrário
     # s5 salva p1 correto
     xor t0, s2, s4  # Analisa d2 xor d4
@@ -100,7 +103,7 @@ print_linha_1:
 
     li a0, 1    # file descriptor stdout = 1
     mv a1, a4   # Buffer pro primeiro print
-    li a2, 8    # Tamanho do print são 8 bytes
+    li a2, 11    # Tamanho do print são 8 bytes
     li a7, 64   # Syscall write 64
     ecall
 
@@ -114,15 +117,26 @@ read_linha_2:
     li a7, 63   # Syscall read 63
     ecall
 
+    lbu t1, buf_input   # Caractere lido em t1
+
     li t0, '\n'
-    beq a1, t0, parity  # Se leu um \n começa a conferir as paridades dos bits
+    beq t1, t0, parity  # Se leu um \n começa a conferir as paridades dos bits
 
     addi a3, a3, 1  # Indica em qual dígito de leitura está
 
-    addi a1, a1, -'0'   # Mudança de str pra int
+    addi t1, t1, -'0'   # Mudança de str pra int
+
+    li t0, 1
+    beq a3, t0, salva_p1
+
+    li t0, 2
+    beq a3, t0, salva_p2
 
     li t0, 3
     beq a3, t0, salva_d1
+
+    li t0, 4
+    beq a3, t0, salva_p3
 
     li t0, 5
     beq a3, t0, salva_d2
@@ -134,15 +148,15 @@ read_linha_2:
     beq a3, t0, salva_d4
 
 salva_p1:   # Salva o valor escrito de p1 em s8
-    mv s8, a1
+    mv s8, t1
     j read_linha_2
 
 salva_p2:   # Salva o valor escrito de p2 em s9
-    mv s9, a2
+    mv s9, t1
     j read_linha_2
 
 salva_p3:   # Salva o valor escrito de p3 em s10
-    mv s10, a3
+    mv s10, t1
     j read_linha_2
 
 confere_paridade:
@@ -168,9 +182,10 @@ print_linha_2:
     lb s11, 5(a4)
     # Quebra de linha final
     lb t0, 6(a4)
+
     li a0, 1    # file descriptor stdout = 1
-    mv a1, a4   # Buffer pro primeiro print
-    li a2, 6    # Tamanho do print são 8 bytes
+    mv a1, a4   # Buffer pros últimos prints
+    li a2, 7    # Tamanho do print são 7 bytes
     li a7, 64   # Syscall write 64
     ecall
 
@@ -178,4 +193,3 @@ fim:
     li a0, 0
     li a7, 93   # Syscall exit
     ecall
-    
