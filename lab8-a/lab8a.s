@@ -6,6 +6,8 @@
 
 _start:
     la a3, buffer_image # Buffer pro conteúdo da imagem
+    li a4, 0    # Largura da imagem
+    li a5, 0    # Altura da imagem
 
     la a0, input_file    # address for the file path
     li a1, 0             # flags (0: rdonly, 1: wronly, 2: rdwr)
@@ -28,9 +30,14 @@ read:
     ecall
 
     addi a3, a3, 3  # Tendo certeza que é um arquivo pgm, os dois primeiros bytes lidos são os números mágicos "p" e "5" e o próximo byte é um whitespace, a partir daq encontra-se primeiro a largura e depois a altura
+    li t2, 0    # Marca qual dimensão foi lida
+    li t3, 0    # Acumulador pro valor da dimensão
 
-largura:
+dimensao:
     lb t0, 0(a3)    # Carrega o byte atual lido
+
+    addi a3, a3, 1  # Move o buffer pra conferir o próximo byte antes de quebrar essa função
+
     # Analisa se é um dos diferentes tipos de whitespace
     li t1, ' '  # Blankspace
     beq t0, t1, altura
@@ -44,4 +51,29 @@ largura:
     li t1, '\r' # CR (Carriage Return)
     beq t0, t1, altura
 
-altura:
+    addi t0, t0, -'0'   # Transforma de str pra int
+    # t3 = 10*t3 + t0
+    li t1, 10
+    mul t3, t3, t1
+    add t3, t3, t0
+
+    j dimensao   # Continua lendo até achar o valor da dimensão da imagem
+
+proxima_linha:
+    addi, t2, t2, 1 # Marca qual dimensão acabou de ser lida
+
+    mv a5, t3   # Se continuar com esse valor já está salvo no registrador a5 o valor da altura, senão na segunda iteração irá passar o valor corredo
+    
+    li t1, 2
+    beq t2, t1, marca_pixels    # Se tiver lido a altura salva os pixels
+    # Se não salva o registrador a4 o valor da largura
+    mv a4, t3
+    li t3, 0    # Reinicia o acumulador pra achar o valor da altura
+    j dimensao  # Volta pra ler a altura
+
+marca_pixels:
+    # for (int i = 0; i < altura; i++){
+    #   for (int j = 0; j < largura; j++{
+    #       set_pixel
+    #   }
+    #}
