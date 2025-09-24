@@ -1,12 +1,10 @@
 .data 
-    kernel: .byte -1, -1, -1, -1, 8, -1, -1, -1, -1    # Matriz que representa o filtro
     input_file: .asciz "image.pgm"  # Caminho para o arquivo de imagem
     buffer_image: .space 263000 # Tamanho em bytes com margem de erro para uma imagem no máximo 512 x 512  
 .text
 .globl _start
 
 _start:
-    la a6, kernel   # Carrega o início do kernel
     la a3, buffer_image # Buffer pro conteúdo da imagem
     li a4, 0    # Largura da imagem
     li a5, 0    # Altura da imagem
@@ -171,9 +169,56 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
-    lbu t0, 0(a3)   # Carrega o pixel atual 
+    la s1, a3   # Carrega o ponteiro do pixel atual
+    add s1, s1, a4  # Salva o ponteiro pra linha logo abaixo 
+    add s2, s1, a4  # Salva o ponteiro pra linha duas abaixo
+    # Os passos abaixo realizam a soma de 8 pixels menos o central pra só depois múltiplicar por -1
+    lbu s3, 0(a3)   # Carrega o pixel atual 
+    lbu t0, 1(a3)   # Carrega o pixel logo à frente 
+    add s3, s3, t0
 
-    
+    lbu t0, 2(a3)   # Carrega o último pixel que será lido na mesma linha
+    add s3, s3, t0 
+
+    lbu t0, 0(s1)   # Carrega o primeiro pixel da segunda linha
+    add s3, s3, t0
+
+    lbu t0, 2(s1)   # Carrega o último pixel da segunda linha
+    add s3, s3, t0
+
+    lbu t0, 0(s2)   # Carrega o primeiro pixel da terceiro linha
+    add s3, s3, t0  
+
+    lbu t0, 1(s2)   # Carrega o segundo pixel da terceira linha
+    add s3, s3, t0
+
+    lbu t0, 2(s2)   # Carrega o último pixel da terceira linha
+    add s3, s3, t0
+
+    sub s3, x0, s3  # Múltiplica a soma de todos os 8 da borda por -1
+
+    lbu t0, 1(s1)   # Carrega o pixel do meio
+    li s4, 8
+    mul s4, s4, t0  # 8*pixel do meio
+
+    add s3, s3, s4  # Finaliza a soma
+
+confere_altura_output:
+    beq t1, a5, confere_coluna_output   # Confere se está na última linha
+    ret
+
+confere_coluna_output:
+    beq t2, a4, marca_fim_output    # Confere se está na última coluna da última linha
+    ret
+marca_fim_output:
+    li t3, 1    # Caso esteja, marca que encerrou
+    ret
+
+pulo_output:
+    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna e volta a ler o loop
+    addi t1, t1, 1
+    li t2, 0
+    j marca_pixel
     
 escala_tela:
     # mv a0, a4   # Largura
