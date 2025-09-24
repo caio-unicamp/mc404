@@ -11,7 +11,13 @@ _start:
     li a7, 1024          # syscall open
     ecall
 
-    mv s0, a0   # Salva o file descriptor em a0
+    mv s0, a0   # Salva o file descriptor em s0
+
+    # Fecha o arquivo pra poder usar o file descriptor novamente
+    li a0, 3             # file descriptor (fd) 3
+    li a7, 57            # syscall close
+    ecall
+
 read:
     mv a0, s0   # file descriptor pra imagem 
     la a1, buffer_image # buffer de leitura
@@ -20,4 +26,8 @@ read:
     ecall
 
     mv s1, a0   # Salva o tamanho da imagem em bytes no registrador s1
-    la s2, buffer_image # Carrega o conteúdo da imagem lida
+    la s2, buffer_image # Carrega o conteúdo da imagem lida no registrador s2
+
+    li t0, 0    # Condição de parada, bytes a mais lidos sem conteúdo são salvos como 0
+salva_pixels:
+
