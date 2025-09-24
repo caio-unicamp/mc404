@@ -38,19 +38,12 @@ dimensao:
 
     addi a3, a3, 1  # Move o buffer pra conferir o próximo byte antes de quebrar essa função
 
-    # Analisa se é um dos diferentes tipos de whitespace
-    li t1, ' '  # Blankspace
-    beq t0, t1, altura
-
-    li t1, '\n' # LF (Line Feed) quebra de linha
-    beq t0, t1, altura
-
-    li t1, '\t' # Horizontal Tab
-    beq t0, t1, altura
-
-    li t1, '\r' # CR (Carriage Return)
-    beq t0, t1, altura
-
+    li a1, 0    # Flag pra dizer se achou ou não um whitespace
+    jal ra, confere_whitespace  # Parte pra procurar whitespace
+    
+    li t4, 1
+    beq a1, t4, proxima_linha   # Se achou um whitespace vai pra próxima dimensão
+    
     addi t0, t0, -'0'   # Transforma de str pra int
     # t3 = 10*t3 + t0
     li t1, 10
@@ -59,8 +52,28 @@ dimensao:
 
     j dimensao   # Continua lendo até achar o valor da dimensão da imagem
 
+confere_whitespace:
+    # Analisa se é um dos diferentes tipos de whitespace
+    li t1, ' '  # Blankspace
+    beq t0, t1, marca_whitespace
+
+    li t1, '\n' # LF (Line Feed) quebra de linha
+    beq t0, t1, marca_whitespace
+
+    li t1, '\t' # Horizontal Tab
+    beq t0, t1, marca_whitespace
+
+    li t1, '\r' # CR (Carriage Return)
+    beq t0, t1, marca_whitespace
+
+    ret # Se não for um whitespace volta pra ler a dimensão
+
+marca_whitespace:
+    li a1, 1    # Marca que achou um whitespace
+    ret
+
 proxima_linha:
-    addi, t2, t2, 1 # Marca qual dimensão acabou de ser lida
+    addi, t2, t2, 1 # Avança no valor de qual dimensão acabou de ser lida
 
     li t1, 2
     beq t2, t1, salva_altura    # Se tiver lido a altura salva os pixels
@@ -72,7 +85,7 @@ proxima_linha:
 salva_altura:
     mv a5, t3   # Salva no registrador a5 o valor da altura
 
-    addi a3, a3, 4  # Atualmente está no caractere whitespace após a altura, depois disso irá ler o MAXVAL, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace antes de começar a leitura dos pixels reais
+    addi a3, a3, 4  # Atualmente acabou de ler o último whitespace antes do MAXVAL, estando agora no primeiro número desse, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace, que dessa vez sabe-se que é único, antes de começar a leitura dos pixels reais
 
 marca_pixels:
     # for (int i = 0; i < altura; i++){
