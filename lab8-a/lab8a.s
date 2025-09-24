@@ -17,10 +17,6 @@ _start:
 
     mv s0, a0   # Salva o file descriptor em s0
 
-    # Fecha o arquivo pra poder usar o file descriptor novamente
-    li a0, 3             # file descriptor (fd) 3
-    li a7, 57            # syscall close
-    ecall
 
 read:
     mv a0, s0   # file descriptor pra imagem 
@@ -73,19 +69,17 @@ marca_whitespace:
     ret
 
 proxima_linha:
-    addi, t2, t2, 1 # Avança no valor de qual dimensão acabou de ser lida
+    addi t2, t2, 1 # Avança no valor de qual dimensão acabou de ser lida
 
     li t1, 2
     beq t2, t1, salva_altura    # Se tiver lido a altura salva os pixels
     # Se não salva o registrador a4 o valor da largura
     mv a4, t3
-    addi a4, a4, -1 # Como a tela é 0-indexada diminui 1 no valor da largura
     li t3, 0    # Reinicia o acumulador pra achar o valor da altura
     j dimensao  # Volta pra ler a altura
 
 salva_altura:
     mv a5, t3   # Salva no registrador a5 o valor da altura
-    addi a5, a5, -1 # Como a tela é 0-indexada diminui 1 de valor da altura
 
     addi a3, a3, 4  # Atualmente acabou de ler o último whitespace antes do MAXVAL, estando agora no primeiro número desse, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace, que dessa vez sabe-se que é único, antes de começar a leitura dos pixels reais
 
@@ -104,12 +98,64 @@ marca_pixel:
     #       set_pixel
     #   }
     #}
+    li t3, 0    # Flag pra indicar se já acabou os loops, se manter assim encerra
+    jal ra, confere_altura
+    li t4, 1
+    beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
 
-    beq t1, a5, escala_tela # Caso já 
+    beq t2, a4, pulo    # Se estiver na última coluna, pula de linha
 
     lbu t0, 0(a3)   # Carrega o pixel atual
 
-confere_fim:
-    beq t2, a4, escala_tela # Se tá na última altura verifica se já viu o último pixel pra encerrar a marcação 
+    slli t3, t0, 24 # Referente ao R    
+    slli t4, t0, 16 # Referente ao G
+    slli t5, t0, 8  # Referente ao B
+    li t6, 0xFF     # Alpha = 255 em todos
 
+    or t3, t3, t4   # R or G combina os dois 
+    or t3, t3, t5   # R or G or B combina os três
+    or t3, t3, t6   # R or G or B or A combina os quatro 
+    # t3 = 0xRRGGBB
+
+    mv a0, t2   # Coordenada x do pixel
+    mv a1, t1   # Coordenada y do pixel
+    mv a2, t3   # t3 = 0xRRGGBBAA
+    li a7, 2200 # Syscall setPixel
+    ecall
+
+    addi a3, a3, 1  # Aumenta o ponteiro do buffer
+
+    addi t2, t2, 1  # Parte pra próxima coluna
+
+    j marca_pixel   # Volta a ler o loop
+
+confere_altura:
+    beq t1, a5, confere_coluna # Confere se está na última linha 
+    ret
+confere_coluna:
+    beq t2, a4, marca_fim   # Confere se está na última coluna da última linha
+    ret
+marca_fim:
+    li t3, 1    # Caso esteja marca que encerrou
+    ret
+
+pulo:
+    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna e volta a ler o loop
+    addi t1, t1, 1  
+    li t2, 0    
+    j marca_pixel
+    
 escala_tela:
+    # mv a0, a4   # Largura
+    # mv a1, a5   # Altura
+    # li a7, 2202 # Syscall setScaling
+
+exit:
+    # Fecha o arquivo pra poder usar o file descriptor novamente
+    li a0, 3             # file descriptor (fd) 3
+    li a7, 57            # syscall close
+    ecall
+    
+    li a0, 0
+    li a7, 93   # Exit syscall 
+    ecall
