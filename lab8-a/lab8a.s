@@ -62,14 +62,17 @@ dimensao:
 proxima_linha:
     addi, t2, t2, 1 # Marca qual dimensão acabou de ser lida
 
-    mv a5, t3   # Se continuar com esse valor já está salvo no registrador a5 o valor da altura, senão na segunda iteração irá passar o valor corredo
-    
     li t1, 2
-    beq t2, t1, marca_pixels    # Se tiver lido a altura salva os pixels
+    beq t2, t1, salva_altura    # Se tiver lido a altura salva os pixels
     # Se não salva o registrador a4 o valor da largura
     mv a4, t3
     li t3, 0    # Reinicia o acumulador pra achar o valor da altura
     j dimensao  # Volta pra ler a altura
+
+salva_altura:
+    mv a5, t3   # Salva no registrador a5 o valor da altura
+
+    addi a3, a3, 4  # Atualmente está no caractere whitespace após a altura, depois disso irá ler o MAXVAL, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace antes de começar a leitura dos pixels reais
 
 marca_pixels:
     # for (int i = 0; i < altura; i++){
