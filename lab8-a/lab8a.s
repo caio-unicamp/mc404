@@ -34,7 +34,7 @@ read:
     li t3, 0    # Acumulador pro valor da dimensão
 
 dimensao:
-    lb t0, 0(a3)    # Carrega o byte atual lido
+    lbu t0, 0(a3)    # Carrega o ubyte atual lido
 
     addi a3, a3, 1  # Move o buffer pra conferir o próximo byte antes de quebrar essa função
 
@@ -79,17 +79,37 @@ proxima_linha:
     beq t2, t1, salva_altura    # Se tiver lido a altura salva os pixels
     # Se não salva o registrador a4 o valor da largura
     mv a4, t3
+    addi a4, a4, -1 # Como a tela é 0-indexada diminui 1 no valor da largura
     li t3, 0    # Reinicia o acumulador pra achar o valor da altura
     j dimensao  # Volta pra ler a altura
 
 salva_altura:
     mv a5, t3   # Salva no registrador a5 o valor da altura
+    addi a5, a5, -1 # Como a tela é 0-indexada diminui 1 de valor da altura
 
     addi a3, a3, 4  # Atualmente acabou de ler o último whitespace antes do MAXVAL, estando agora no primeiro número desse, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace, que dessa vez sabe-se que é único, antes de começar a leitura dos pixels reais
 
-marca_pixels:
+tamanho_tela:
+    mv a0, a4   # Largura da tela
+    mv a1, a5   # Altura da tela
+    li a7, 2201 # syscall setCanvasSize
+    ecall
+
+    li t1, 0    # Marca em qual altura está 
+    li t2, 0    # Marca em qual largura está
+
+marca_pixel:
     # for (int i = 0; i < altura; i++){
     #   for (int j = 0; j < largura; j++{
     #       set_pixel
     #   }
     #}
+
+    beq t1, a5, escala_tela # Caso já 
+
+    lbu t0, 0(a3)   # Carrega o pixel atual
+
+confere_fim:
+    beq t2, a4, escala_tela # Se tá na última altura verifica se já viu o último pixel pra encerrar a marcação 
+
+escala_tela:
