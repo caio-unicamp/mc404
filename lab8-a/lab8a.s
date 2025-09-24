@@ -5,6 +5,8 @@
 .globl _start
 
 _start:
+    la a3, buffer_image # Buffer pro conteúdo da imagem
+
     la a0, input_file    # address for the file path
     li a1, 0             # flags (0: rdonly, 1: wronly, 2: rdwr)
     li a2, 0             # mode
@@ -25,9 +27,21 @@ read:
     li a7, 63   # Syscall read
     ecall
 
-    mv s1, a0   # Salva o tamanho da imagem em bytes no registrador s1
-    la s2, buffer_image # Carrega o conteúdo da imagem lida no registrador s2
+    addi a3, a3, 3  # Tendo certeza que é um arquivo pgm, os dois primeiros bytes lidos são os números mágicos "p" e "5" e o próximo byte é um whitespace, a partir daq encontra-se primeiro a largura e depois a altura
 
-    li t0, 0    # Condição de parada, bytes a mais lidos sem conteúdo são salvos como 0
-salva_pixels:
+largura:
+    lb t0, 0(a3)    # Carrega o byte atual lido
+    # Analisa se é um dos diferentes tipos de whitespace
+    li t1, ' '  # Blankspace
+    beq t0, t1, altura
 
+    li t1, '\n' # LF (Line Feed) quebra de linha
+    beq t0, t1, altura
+
+    li t1, '\t' # Horizontal Tab
+    beq t0, t1, altura
+
+    li t1, '\r' # CR (Carriage Return)
+    beq t0, t1, altura
+
+altura:
