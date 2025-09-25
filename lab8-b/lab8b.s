@@ -82,7 +82,11 @@ salva_altura:
 
     addi a3, a3, 4  # Atualmente acabou de ler o último whitespace antes do MAXVAL, estando agora no primeiro número desse, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace, que dessa vez sabe-se que é único, antes de começar a leitura dos pixels reais
 
+    mv s5, a3   # Marca onde está o começo da imagem em s5
+    mv s6, a4   # Salva a largura original em s6
+    mv s7, a5   # Salva a altura original em s7
 tamanho_tela:
+
     mv a0, a4   # Largura da tela
     mv a1, a5   # Altura da tela
     li a7, 2201 # syscall setCanvasSize
@@ -106,7 +110,7 @@ inicializa_output:
 
     mv a0, t2   # Coordenada x do pixel
     mv a1, t1   # Coordenada y do pixel
-    li a2, 0   # Inicializa como preto
+    li a2, 0x000000FF   # Inicializa como preto
     li a7, 2200 # Syscall setPixel
     ecall
 
@@ -124,7 +128,7 @@ confere_coluna:
     ret
 marca_fim:
     li t3, 1    # Caso esteja marca que encerrou
-
+    mv a3, s5   # Reseta o buffer do começo da imagem
     # Reseta as coordenadas em que o pixel se encontra
     li t1, 1    # Altura atual
     li t2, 1    # Largura atual
@@ -153,9 +157,8 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
-    mv s1, a3   # Carrega o ponteiro do pixel atual
-    add s1, s1, a4  # Salva o ponteiro pra linha logo abaixo 
-    add s2, s1, a4  # Salva o ponteiro pra linha duas abaixo
+    add s1, a3, s6  # Salva o ponteiro pra linha logo abaixo 
+    add s2, s1, s6  # Salva o ponteiro pra linha duas abaixo
     # Os passos abaixo realizam a soma de 8 pixels menos o central pra só depois múltiplicar por -1
     lbu s3, 0(a3)   # Carrega o pixel atual 
     lbu t0, 1(a3)   # Carrega o pixel logo à frente 
@@ -186,6 +189,7 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     mul s4, s4, t0  # 8*pixel do meio
 
     add s3, s3, s4  # Finaliza a soma e salva o pixel de output em s3
+    jal ra, confere_limite  
 
     slli t0, s3, 24 # Referente ao R
     slli s1, s3, 16 # Referente ao G
@@ -196,7 +200,6 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     or t0, t0, s2   # R or G or B combina os três
     or t0, t0, t4   # R or G or B or A combina os quatro
     # t0 = 0xRRGGBBAA filtrado
-    jal ra, confere_limite  
 
     mv a0, t2   # Coordenada x do pixel
     mv a1, t1   # Coordenada y do pixel
@@ -211,15 +214,15 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     j marca_pixel
 
 confere_limite: # Verifica se o número ultrapassou os limites de um byte
-    blt t0, x0, set_zero
-    li t6, 255
-    bge s0, t6, set_max
+    blt s3, x0, set_zero
+    li t0, 255
+    bge s3, t0, set_max
     ret
 set_zero:   # Caso seja menor que 0 seta pra 0
-    li t0, 0 
+    li s3, 0 
     ret
 set_max:    # Caso seja maior que o máximo seta pro máximo
-    li t0, 255
+    li s3, 255
     ret
 
 confere_altura_output:
@@ -233,7 +236,8 @@ marca_fim_output:
     ret
 
 pulo_output:
-    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna e volta a ler o loop
+    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna, aumenta de novo o buffer do a3 pra ignorar a borda e volta a ler o loop
+    addi a3, a3, 2
     addi t1, t1, 1
     li t2, 1
     j marca_pixel
@@ -244,7 +248,7 @@ escala_tela:
     # li a7, 2202 # Syscall setScaling
 
 exit:
-    # Fecha o arquivo pra poder usar o file descriptor novamente
+    # Fecha o arquivo
     li a0, 3             # file descriptor (fd) 3
     li a7, 57            # syscall close
     ecall
