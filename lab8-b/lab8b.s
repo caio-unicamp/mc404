@@ -83,10 +83,6 @@ salva_altura:
     addi a3, a3, 4  # Atualmente acabou de ler o último whitespace antes do MAXVAL, estando agora no primeiro número desse, porém sabe-se que para todas as imagens esse valor será 255 então ignora esses 3 bytes + o byte de whitespace, que dessa vez sabe-se que é único, antes de começar a leitura dos pixels reais
 
 tamanho_tela:
-    # A matriz de output tem 2 colunas e 2 linhas 
-    addi a5, a5, 2
-    addi a4, a4, 2
-
     mv a0, a4   # Largura da tela
     mv a1, a5   # Altura da tela
     li a7, 2201 # syscall setCanvasSize
@@ -108,21 +104,9 @@ inicializa_output:
 
     beq t2, a4, pulo    # Se estiver na última coluna, pula de linha
 
-    lbu t0, 0(a3)   # Carrega o pixel atual
-
-    slli t3, t0, 24 # Referente ao R    
-    slli t4, t0, 16 # Referente ao G
-    slli t5, t0, 8  # Referente ao B
-    li t6, 0xFF     # Alpha = 255 em todos
-
-    or t3, t3, t4   # R or G combina os dois 
-    or t3, t3, t5   # R or G or B combina os três
-    or t3, t3, t6   # R or G or B or A combina os quatro 
-    # t3 = 0xRRGGBB
-
     mv a0, t2   # Coordenada x do pixel
     mv a1, t1   # Coordenada y do pixel
-    mv a2, t3   # t3 = 0xRRGGBBAA
+    li a2, 0   # Inicializa como preto
     li a7, 2200 # Syscall setPixel
     ecall
 
@@ -142,11 +126,11 @@ marca_fim:
     li t3, 1    # Caso esteja marca que encerrou
 
     # Reseta as coordenadas em que o pixel se encontra
-    li t1, 0    # Altura atual
-    li t2, 0    # Largura atual
-    # O tamanho da imagem de input possui 2 colunas e 2 linhas a menos que output
-    addi a4, a4, -2
-    addi a5, a5, -2 
+    li t1, 1    # Altura atual
+    li t2, 1    # Largura atual
+    # Vai mostrar apenas ignorado a borda, então deve ir de t1 = 1 até t1 = largura - 2, com condição de parada analisada em largura - 1
+    addi a4, a4, -1
+    addi a5, a5, -1 
     
     ret
 
@@ -162,14 +146,14 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     #   w = -1   8  -1
     #       -1  -1  -1
     #
-    li t3, 0   # Flag pra indicar se já achou os loops, se manter assim encerra
+    li t3, 0   # Flag pra indicar se já acabou os loops, se manter assim encerra
     jal ra, confere_altura_output
     li t4, 1
     beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
-    la s1, a3   # Carrega o ponteiro do pixel atual
+    mv s1, a3   # Carrega o ponteiro do pixel atual
     add s1, s1, a4  # Salva o ponteiro pra linha logo abaixo 
     add s2, s1, a4  # Salva o ponteiro pra linha duas abaixo
     # Os passos abaixo realizam a soma de 8 pixels menos o central pra só depois múltiplicar por -1
@@ -201,12 +185,46 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     li s4, 8
     mul s4, s4, t0  # 8*pixel do meio
 
-    add s3, s3, s4  # Finaliza a soma
+    add s3, s3, s4  # Finaliza a soma e salva o pixel de output em s3
+
+    slli t0, s3, 24 # Referente ao R
+    slli s1, s3, 16 # Referente ao G
+    slli s2, s3, 8  # Referente ao B
+    li t4, 0xFF     # Alpha = 255 em todos
+
+    or t0, t0, s1   # R or G combina os dois
+    or t0, t0, s2   # R or G or B combina os três
+    or t0, t0, t4   # R or G or B or A combina os quatro
+    # t0 = 0xRRGGBBAA filtrado
+    jal ra, confere_limite  
+
+    mv a0, t2   # Coordenada x do pixel
+    mv a1, t1   # Coordenada y do pixel
+    mv a2, t0   # pixel filtrado
+    li a7, 2200 # Syscall setPixel
+    ecall
+
+    addi a3, a3, 1  # Aumenta o ponteiro do buffer
+
+    addi t2, t2, 1  # Parte para a próxima coluna
+
+    j marca_pixel
+
+confere_limite: # Verifica se o número ultrapassou os limites de um byte
+    blt t0, x0, set_zero
+    li t6, 255
+    bge s0, t6, set_max
+    ret
+set_zero:   # Caso seja menor que 0 seta pra 0
+    li t0, 0 
+    ret
+set_max:    # Caso seja maior que o máximo seta pro máximo
+    li t0, 255
+    ret
 
 confere_altura_output:
     beq t1, a5, confere_coluna_output   # Confere se está na última linha
     ret
-
 confere_coluna_output:
     beq t2, a4, marca_fim_output    # Confere se está na última coluna da última linha
     ret
@@ -217,7 +235,7 @@ marca_fim_output:
 pulo_output:
     # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna e volta a ler o loop
     addi t1, t1, 1
-    li t2, 0
+    li t2, 1
     j marca_pixel
     
 escala_tela:
