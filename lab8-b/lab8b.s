@@ -115,6 +115,13 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
+    # offset = (t1 - 1) * largura + (t2 - 1)
+    addi t4, t1, -1     # t4 = y_out - 1
+    mul t4, t4, s6      # t4 = (y_out - 1) * largura_original (s6)
+    addi t5, t2, -1     # t5 = x_out - 1
+    add t4, t4, t5      # t4 = offset final
+    add a3, s5, t4      # a3 = endereço_inicial_dos_pixels (s5) + offset
+
     add s1, a3, s6  # Salva o ponteiro pra linha logo abaixo 
     add s2, s1, s6  # Salva o ponteiro pra linha duas abaixo
     # Os passos abaixo realizam a soma de 8 pixels menos o central pra só depois múltiplicar por -1
@@ -165,8 +172,6 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     li a7, 2200 # Syscall setPixel
     ecall
 
-    addi a3, a3, 1  # Aumenta o ponteiro do buffer
-
     addi t2, t2, 1  # Parte para a próxima coluna
 
     j marca_pixel
@@ -195,7 +200,6 @@ marca_fim_output:
 
 pulo_output:
     # Pra pular uma linha aumenta em 1 o valor da altura, aumenta o buffer pra próxima linha reseta o valor da coluna e volta a ler o loop
-    addi a3, a3, 1
     addi t1, t1, 1
     li t2, 0
     j marca_pixel
@@ -215,8 +219,6 @@ preto:
     beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
-
-    addi a3, a3, 1  # Avança o ponteiro do buffer
 
     addi t2, t2, 1  # Parte para a próxima coluna
 
