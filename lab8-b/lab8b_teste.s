@@ -149,6 +149,12 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     #
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
+    addi t4, t1, -1
+    mul t4, t4, s6
+    addi t5, t2, -1
+    add t4, t4, t5
+    add a3, s5, t4
+
     add s1, a3, s6  # Salva o ponteiro pra linha logo abaixo 
     add s2, s1, s6  # Salva o ponteiro pra linha duas abaixo
     # Os passos abaixo realizam a soma de 8 pixels menos o central pra só depois múltiplicar por -1
@@ -198,8 +204,6 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     mv a2, t0   # pixel filtrado
     li a7, 2200 # Syscall setPixel
     ecall
-
-    addi a3, a3, 1  # Aumenta o ponteiro do buffer
 
     addi t2, t2, 1  # Parte para a próxima coluna
 
