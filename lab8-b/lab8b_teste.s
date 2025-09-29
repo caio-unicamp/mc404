@@ -95,7 +95,7 @@ tamanho_tela:
     li t1, 0    # Marca em qual altura está 
     li t2, 0    # Marca em qual largura está
     
-inicializa_output:
+inicializa_output:  # <- acho que essa parte quebra minha canva, mas não tenho certeza
     # for (int i = 0; i < altura; i++){
     #   for (int j = 0; j < largura; j++{
     #       set_pixel como preto pro output
