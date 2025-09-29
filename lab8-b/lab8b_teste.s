@@ -95,6 +95,51 @@ tamanho_tela:
     li t1, 0    # Marca em qual altura está 
     li t2, 0    # Marca em qual largura está
     
+inicializa_output:
+    # for (int i = 0; i < altura; i++){
+    #   for (int j = 0; j < largura; j++{
+    #       set_pixel como preto pro output
+    #   }
+    #}
+    li t3, 0    # Flag pra indicar se já acabou os loops, se manter assim encerra
+    jal ra, confere_altura
+    li t4, 1
+    beq t3, t4, marca_pixel # Caso já tenha chegado ao final do loop parte pra próxima parte 
+
+    beq t2, a4, pulo    # Se estiver na última coluna, pula de linha
+
+    mv a0, t2   # Coordenada x do pixel
+    mv a1, t1   # Coordenada y do pixel
+    li a2, 0x000000FF   # Inicializa como preto
+    li a7, 2200 # Syscall setPixel
+    ecall
+
+    addi t2, t2, 1  # Parte pra próxima coluna
+
+    j inicializa_output   # Volta a ler o loop
+
+confere_altura:
+    beq t1, a5, confere_coluna # Confere se está na última linha 
+    ret
+confere_coluna:
+    beq t2, a4, marca_fim   # Confere se está na última coluna da última linha
+    ret
+marca_fim:
+    li t3, 1    # Caso esteja marca que encerrou
+    # Reseta as coordenadas em que o pixel se encontra
+    li t1, 1    # Altura atual
+    li t2, 1    # Largura atual
+    # Vai mostrar apenas ignorado a borda, então deve ir de t1 = 1 até t1 = largura - 2, com condição de parada analisada em largura - 1
+    addi a4, a4, -1
+    addi a5, a5, -1 
+    
+    ret
+
+pulo:
+    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna e volta a ler o loop
+    addi t1, t1, 1  
+    li t2, 0    
+    j inicializa_output
 
 marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução com o kernel
     # 
@@ -102,25 +147,12 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     #   w = -1   8  -1
     #       -1  -1  -1
     #
-    
-    # Se estiver em uma das bordas 
-    beq t1, x0, preto
-    beq t2, x0, preto
-
-    addi t3, a4, -1
-    beq t2, t3, preto
-    
-    addi t3, a5, -1
-    beq t1, t3, preto
+    li t3, 0   # Flag pra indicar se já acabou os loops, se manter assim encerra
+    jal ra, confere_altura_output
+    li t4, 1
+    beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
-
-    # offset = (t1 - 1) * largura + (t2 - 1)
-    addi t4, t1, -1     # t4 = y_out - 1
-    mul t4, t4, s6      # t4 = (y_out - 1) * largura_original (s6)
-    addi t5, t2, -1     # t5 = x_out - 1
-    add t4, t4, t5      # t4 = offset final
-    add a3, s5, t4      # a3 = endereço_inicial_dos_pixels (s5) + offset
 
     add s1, a3, s6  # Salva o ponteiro pra linha logo abaixo 
     add s2, s1, s6  # Salva o ponteiro pra linha duas abaixo
@@ -171,6 +203,8 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     mv a2, t0   # pixel filtrado
     li a7, 2200 # Syscall setPixel
     ecall
+    
+    addi a3, a3, 1  # Aumenta o ponteiro do buffer
 
     addi t2, t2, 1  # Parte para a próxima coluna
 
@@ -188,26 +222,24 @@ set_max:    # Caso seja maior que o máximo seta pro máximo
     li s3, 255
     ret
 
+confere_altura_output:
+    beq t1, a5, confere_coluna_output   # Confere se está na última linha
+    ret
+confere_coluna_output:
+    beq t2, a4, marca_fim_output    # Confere se está na última coluna da última linha
+    ret
+marca_fim_output:
+    li t3, 1    # Caso esteja, marca que encerrou
+    ret
+
 pulo_output:
-    # Pra pular uma linha aumenta em 1 o valor da altura, aumenta o buffer pra próxima linha reseta o valor da coluna e volta a ler o loop
+    # Pra pular uma linha aumenta em 1 o valor da altura, reseta o valor da coluna, aumenta de novo o buffer do a3 pra ignorar a borda e volta a ler o loop
+    addi a3, a3, 2
     addi t1, t1, 1
-    li t2, 0
+    li t2, 1
     j marca_pixel
     
-preto:
-    mv a0, t2   # Coordenada x do pixel
-    mv a1, t1   # Coordenada y do pixel
-    li a2, 0   # Preto
-    li a7, 2200 # Syscall setPixel
-    ecall
-
-    beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
-
-    addi t2, t2, 1  # Parte para a próxima coluna
-
-    j marca_pixel
-    
-escala_tela:    # Aqui serve para testar normalmente, como estamos usando um assistente ele não necessita disso
+escala_tela:
     # mv a0, a4   # Largura
     # mv a1, a5   # Altura
     # li a7, 2202 # Syscall setScaling
