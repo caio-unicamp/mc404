@@ -147,11 +147,6 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     #   w = -1   8  -1
     #       -1  -1  -1
     #
-    li t3, 0   # Flag pra indicar se já acabou os loops, se manter assim encerra
-    jal ra, confere_altura_output
-    li t4, 1
-    beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
-
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
     add s1, a3, s6  # Salva o ponteiro pra linha logo abaixo 
@@ -203,7 +198,7 @@ marca_pixel:    # Marca os pixels da matriz de output aplicando a convolução c
     mv a2, t0   # pixel filtrado
     li a7, 2200 # Syscall setPixel
     ecall
-    
+
     addi a3, a3, 1  # Aumenta o ponteiro do buffer
 
     addi t2, t2, 1  # Parte para a próxima coluna
@@ -220,16 +215,6 @@ set_zero:   # Caso seja menor que 0 seta pra 0
     ret
 set_max:    # Caso seja maior que o máximo seta pro máximo
     li s3, 255
-    ret
-
-confere_altura_output:
-    beq t1, a5, confere_coluna_output   # Confere se está na última linha
-    ret
-confere_coluna_output:
-    beq t2, a4, marca_fim_output    # Confere se está na última coluna da última linha
-    ret
-marca_fim_output:
-    li t3, 1    # Caso esteja, marca que encerrou
     ret
 
 pulo_output:
