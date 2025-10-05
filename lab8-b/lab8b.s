@@ -188,6 +188,16 @@ set_max:    # Caso seja maior que o máximo seta pro máximo
     li s3, 255
     ret
 
+confere_altura_output:
+    beq t1, a5, confere_coluna_output   # Confere se está na última linha
+    ret
+confere_coluna_output:
+    beq t2, a4, marca_fim_output    # Confere se está na última coluna da última linha
+    ret
+marca_fim_output:
+    li t3, 1    # Caso esteja, marca que encerrou
+    ret
+
 pulo_output:
     # Pra pular uma linha aumenta em 1 o valor da altura, aumenta o buffer pra próxima linha reseta o valor da coluna e volta a ler o loop
     addi t1, t1, 1
@@ -200,6 +210,12 @@ preto:
     li a2, 0   # Preto
     li a7, 2200 # Syscall setPixel
     ecall
+
+
+    li t3, 0   # Flag pra indicar se já acabou os loops, se manter assim encerra
+    jal ra, confere_altura_output
+    li t4, 1
+    beq t3, t4, escala_tela # Caso já tenha chegado ao final do loop parte pra próxima parte 
 
     beq t2, a4, pulo_output # Se estiver na última coluna, pula de linha
 
