@@ -1,12 +1,10 @@
 .data
-    input_buffer: .space 1
-    output_buffer: .space 1
+    buffer: .space 1
+
 .text
 .globl _start
 
 _start:
-    la a3, input_buffer # Buffer que irá retornar o índice referente ao caso teste
-    la a4, output_buffer    # Buffer dos outputs
 
 ler:    # Ler o input referente ao índice do caso teste
     li a0, 1    # fd = 1 (stdin)
@@ -16,6 +14,8 @@ ler:    # Ler o input referente ao índice do caso teste
     ecall   
 
 puts:
+    li a2, 1    # Sempre vai printar byte a byte, economiza linhas
+
     loop_puts:  # Analisa até achar um \0 e printa byte a byte
         lbu t0, 0(a0)   # byte atual da string
         beqz t0, termina_puts
@@ -25,8 +25,7 @@ puts:
         sw a0, 0(sp)
         
         li a0, 0    # fd = 0 (stdout)
-        mv a1, a4   # Buffer de print
-        li a2, 1    # Printa byte a byte
+        la a1, buffer   # Buffer de print
         li a7, 64   # Syscall write
         ecall
         # Recupera o ponteiro da string e desempilha ele
@@ -39,15 +38,43 @@ puts:
         li a4, '\n' # Adiciona a quebra de linha ao final da string
 
         li a0, 0    # fd = 0 (stdout)
-        mv a1, a4   # Buffer de print
-        li a2, 1    # Printa byte a byte
+        la a1, buffer   # Buffer de print
         li a7, 64   # Syscall write
         ecall
 
         ret # Retorna para onde foi chamado
 
 gets:
+    li a2, 1    # Sempre lê byte a byte, economiza linhas
+    mv a3, a0   # Salva o começo da string a ser retornada 
+    la a4, buffer
 
+    loop_gets:  # Analisa até achar um \n 
+        # Salva o ponteiro da string para não perdê-la ao ler os inputs
+        addi sp, sp, -1
+        sb a0, 0(sp)
+
+        li a0, 1    # fd = 1 (stdin)
+        mv a1, a4   # Buffer de input
+        li a7, 63   # Syscall read
+        ecall
+        # Caso leia um \n encerra
+        lbu t0, 0(a4)
+        li t1, '\n'
+        beq t0, t1, termina_gets
+        # Recupera o valor da string e desempilha ele
+        lb a0, 0(sp)
+        addi sp, sp, 1
+        # Salva o caractere lido na string e avança 1 byte para ler o próximo
+        sb t0, 0(a0)
+        addi a0, a0, 1 
+
+        j loop_gets
+
+    termina_gets: 
+        sb x0, 0(a0)    # Salva o byte nulo correspondente a \0 no final da string     
+        mv a0, a3   # Volta pro começo da string
+        ret # Retorna para onde foi chamada
 atoi:
 
 itoa:
