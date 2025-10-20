@@ -1,20 +1,50 @@
 .data
     input_buffer: .space 1
-    output_buffer: .space 5
+    output_buffer: .space 1
 .text
 .globl _start
 
 _start:
     la a3, input_buffer # Buffer que irá retornar o índice referente ao caso teste
+    la a4, output_buffer    # Buffer dos outputs
 
 ler:    # Ler o input referente ao índice do caso teste
-    li a0, 1    # fd = stdin
+    li a0, 1    # fd = 1 (stdin)
     mv a1, a3   # Buffer que lê o índice do caso teste
     li a2, 1    # size = 1 
     li a7, 63   # syscall read
     ecall   
 
 puts:
+    loop_puts:  # Analisa até achar um \0 e printa byte a byte
+        lbu t0, 0(a0)   # byte atual da string
+        beqz t0, termina_puts
+
+        # Salva o ponteiro da minha string para não perdê-la ao printar
+        addi sp, sp, -4
+        sw a0, 0(sp)
+        
+        li a0, 0    # fd = 0 (stdout)
+        mv a1, a4   # Buffer de print
+        li a2, 1    # Printa byte a byte
+        li a7, 64   # Syscall write
+        ecall
+        # Recupera o ponteiro da string e desempilha ele
+        lw a0, 0(sp)    
+        addi sp, sp, 4
+
+        j loop_puts # Lê-se em loop
+
+    termina_puts:
+        li a4, '\n' # Adiciona a quebra de linha ao final da string
+
+        li a0, 0    # fd = 0 (stdout)
+        mv a1, a4   # Buffer de print
+        li a2, 1    # Printa byte a byte
+        li a7, 64   # Syscall write
+        ecall
+
+        ret # Retorna para onde foi chamado
 
 gets:
 
