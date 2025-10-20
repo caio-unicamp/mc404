@@ -2,7 +2,7 @@
     buffer: .space 1
 
 .text
-.globl _start
+.globl _start, puts, gets, atoi, itoa, exit, linked_list_search_node
 
 _start:
 
@@ -58,13 +58,13 @@ gets:
         mv a1, a4   # Buffer de input
         li a7, 63   # Syscall read
         ecall
+        # Recupera o valor da string e desempilha ele
+        lb a0, 0(sp)
+        addi sp, sp, 1
         # Caso leia um \n encerra
         lbu t0, 0(a4)
         li t1, '\n'
         beq t0, t1, termina_gets
-        # Recupera o valor da string e desempilha ele
-        lb a0, 0(sp)
-        addi sp, sp, 1
         # Salva o caractere lido na string e avança 1 byte para ler o próximo
         sb t0, 0(a0)
         addi a0, a0, 1 
@@ -75,7 +75,69 @@ gets:
         sb x0, 0(a0)    # Salva o byte nulo correspondente a \0 no final da string     
         mv a0, a3   # Volta pro começo da string
         ret # Retorna para onde foi chamada
+
 atoi:
+    li a2, 1    # Lê sempre byte a byte, economiza linhas
+    la a3, buffer   
+    li a4, 1    # Flag para saber se o número é negativo
+    li a5, 0    # Acumulador para número que será retornado
+
+    loop_atoi:
+        # Salva o ponteiro da string para não perdê-lo na leitura
+        addi sp, sp, -1
+        sb a0, 0(sp)
+
+        li a0, 1    # fd = 1 (stdin)
+        mv a1, a3   # Buffer de leitura
+        li a7, 64   # Syscall write
+        ecall
+        # Recupera o valor do ponteiro da string
+        lb a0, 0(sp)
+        addi sp, sp, 1
+
+        lbu t0, 0(a3)
+        beqz t0, termina_atoi   # Encerra em \0
+
+        # Ignora whitespaces
+        li t1, ' '
+        beq t0, t1, loop_atoi
+
+        li t1, '\t'
+        beq t0, t1, loop_atoi
+
+        li t1, '\n'
+        beq t0, t1, loop_atoi
+
+        li t1, '\v' 
+        beq t0, t1, loop_atoi
+
+        li t1, '\f'
+        beq t0, t1, loop_atoi
+
+        li t1, '\r'
+        beq t0, t1, loop_atoi
+        # Se o número for positivo, ignora
+        li t1, '+' 
+        beq t0, t1, loop_atoi
+        # Se for negativo, marca
+        li t1, '-'
+        beq t0, t1, marca_neg_atoi
+        # Se chegou até aqui, leu um dígito
+        addi t0, t0, -'0'   # Transforma de str pra int
+        mul a5, a5, 10
+        add a5, a5, t0
+
+        addi a0, a0, 1  # Avança no ponteiro da string para seguir na leitura
+        j loop_atoi 
+
+    marca_neg_atoi: 
+        li a4, -1
+        addi a0, a0, 1  # Pula para o próximo byte de leitura
+        j loop_atoi
+
+    termina_atoi:
+        mul a0, a5, a4  # Múltiplica pelo sinal do número
+        ret # Retorna pra onde foi chamada
 
 itoa:
 
