@@ -1,6 +1,7 @@
 .data
     buffer: .space 1
-
+.rodata
+    hex: .byte '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 .text
 .globl _start, puts, gets, atoi, itoa, exit, linked_list_search_node
 
@@ -32,13 +33,14 @@ puts:
         lw a0, 0(sp)    
         addi sp, sp, 4
 
-        j loop_puts # Lê-se em loop
+        addi a0, a0, 1  # Segue para o próximo byte da string a ser printada
+        j loop_puts 
 
     termina_puts:
-        li a4, '\n' # Adiciona a quebra de linha ao final da string
-
-        li a0, 0    # fd = 0 (stdout)
         la a1, buffer   # Buffer de print
+        li a4, '\n' # Adiciona a quebra de linha ao final da string
+        sb a4, 0(a1)    
+        li a0, 0    # fd = 0 (stdout)
         li a7, 64   # Syscall write
         ecall
 
@@ -91,7 +93,7 @@ atoi:
         mv a1, a3   # Buffer de leitura
         li a7, 64   # Syscall write
         ecall
-        # Recupera o valor do ponteiro da string
+        # Recupera o valor do ponteiro da string e o desempilha
         lb a0, 0(sp)
         addi sp, sp, 1
 
@@ -140,12 +142,85 @@ atoi:
         ret # Retorna pra onde foi chamada
 
 itoa:
+    mv a3, a1   # Salva o começo da string em a3
+    li a4, 0    # Salva quantos bytes vão ser armazenados em a3 para recuperar de sp
+
+    li t0, 10
+    beq a2, t0, confere_neg_itoa
+    # Se não for base 10, será base hexadecimal
+    la a5, hex  # Vetor dos caracteres de hexadecimal
+    li a6, 28   # Shift inicial
+    li a7, 0    # Flag para indicar se já começou a colocar os números na base hexa
+    j base_16_itoa  
+
+    confere_neg_itoa:
+        bge a0, x0, base_10_itoa
+
+    marca_neg_itoa: # Marca que o número é negativo
+        li t0, '-'
+        sb t0, 0(a1)
+        addi a1, a1, 1
+        
+        sub a0, x0, a0  # Transforma o valor em positivo
+        
+    base_10_itoa:
+        bge x0, a0, armazena_itoa   # Acaba quando a0 <= 0
+
+        li t1, 10
+        rem t0, a0, t1  # Checa o resto da divisão de a0 por 10
+        addi t0, t0, '0'    # Transforma de int pra str
+
+        addi sp, sp, -1 # Usa sp para armazenar os bytes de dígitos em a1
+        sb t0, 0(sp)    # Armazena o dígito atual em sp 
+
+        addi a4, a4, 1  # Marca que salvou mais um dígito
+        div a0, a0, t1  # Divide o valor de a0 por 10 para ler o próximo dígito
+
+        j base_10_itoa
+
+    base_16_itoa:
+        bgez a6, termina_itoa   # Se o shift for 0, encerra
+
+        srl t0, a0, a6  # t0 = a0 >> s6(shift)
+        ori t0, 0xF # Pega apenas os 4 bits da direita 
+
+        bnez t0, coloca_itoa_hex    # Se t0 != 0 coloca no buffer
+        beq a6, coloca_itoa_hex # Se o shift for 0 coloca no buffer
+        bnez a7, coloca_itoa_hex    # Se já começou a colocar no buffer
+        j prox_itoa
+
+        coloca_itoa_hex:
+            add t1, a5, t0  # Acha o caractére equivalente em hexadecimal
+            sb t1, 0(a1)    # Armazena o caractére em hexadecimal na string
+            addi a4, a4, 1  # Avança em qual caractére foi inserido
+            li a7, 1    # Marca que já começou a alocação dos bytes dessa base
+
+        prox_itoa:
+            addi a1, a1, 1  # Avança na string
+            addi a6, a6, -4 # Shift de 4 em 4 bits para leitura de hexadecimal em loop
+            j base_16_itoa
+
+    armazena_itoa:
+        beqz a4, termina_itoa
+        # Carrega o dígito a ser inserio na string e o desempilha
+        lb t0, 0(sp)
+        addi sp, sp, 1
+        # Armazena o dígito na string e passa para a próxima posição
+        sb t0, 0(a1)
+        addi a1, a1, 1
+
+        addi a4, a4, -1 # Diminui a quantidade de dígitos que devem ser colocados na string
+        j armazena_itoa
+
+    termina_itoa:
+        sb x0, 0(a1)    # Armazena o \0 para indicar que acabou a string
+        mv a0, a3   # Recupera o início da string para retorná-lo
+        ret # Retorna pra quem a chamou
 
 exit:
 
 linked_list_search_node:    # Implementação da função linked_list_search_node
-    inicializacao:
-        li t4, 0    # Índice da linked-list começa em 0
+    li t4, 0    # Índice da linked-list começa em 0
 
     percorre_lista:
         lw t0, 0(a0)    # Val1
