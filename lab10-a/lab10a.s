@@ -1,10 +1,10 @@
 .data
-    buffer: .space 1
+    buffer: .space 1    # Tanto os buffers de leitura quanto de impressão são necessários apenas byte a byte
 .rodata
     hex: .byte '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+
 .text
 .globl _start, puts, gets, atoi, itoa, exit, linked_list_search_node
-
 _start:
 
 ler:    # Ler o input referente ao índice do caso teste
@@ -13,6 +13,40 @@ ler:    # Ler o input referente ao índice do caso teste
     li a2, 1    # size = 1 
     li a7, 63   # syscall read
     ecall   
+
+    lbu t0, 0(a3)   # Lê qual o caso 
+
+    li t1, '0'
+    beq t0, t1, caso_0
+
+    li t1, '1'
+    beq t0, t1, caso_1
+
+    li t1, '2'
+    beq t0, t1, caso_2
+
+    li t1, '3'
+    beq t0, t1, caso_3
+
+    li t1, '4'
+    beq t0, t1, caso_4
+
+    li t1, '5'
+    beq t0, t1, caso_5
+
+    j exit  # Se não é nenhum dos casos teste vai para a função de terminar
+
+caso_0:
+
+caso_1:
+
+caso_2:
+
+caso_3:
+
+caso_4:
+
+caso_5:
 
 puts:
     li a2, 1    # Sempre vai printar byte a byte, economiza linhas
