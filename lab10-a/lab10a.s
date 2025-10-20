@@ -217,7 +217,9 @@ itoa:
         mv a0, a3   # Recupera o início da string para retorná-lo
         ret # Retorna pra quem a chamou
 
-exit:
+exit:   # a0 já possui o fd relativo ao código
+    li a7, 93   # Syscall exit
+    ecall
 
 linked_list_search_node:    # Implementação da função linked_list_search_node
     li t4, 0    # Índice da linked-list começa em 0
