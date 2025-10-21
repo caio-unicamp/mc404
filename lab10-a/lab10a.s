@@ -152,10 +152,10 @@ itoa:
         j armazena_itoa # Se a0 for 0 termina o loop
 
     base_16_itoa:
-        bgez a6, termina_itoa   # Se o shift for 0, encerra
+        bltz a6, termina_itoa   # Se o shift for 0, encerra
 
         srl t0, a0, a6  # t0 = a0 >> a6(shift)
-        ori t0, t0, 0xF # Pega apenas os 4 bits da direita 
+        andi t0, t0, 0xF # Pega apenas os 4 bits da direita 
 
         bnez t0, coloca_itoa_hex    # Se t0 != 0 coloca no buffer
         beqz a6, coloca_itoa_hex # Se o shift for 0 coloca no buffer
@@ -163,13 +163,14 @@ itoa:
         j prox_itoa
 
         coloca_itoa_hex:
-            add t1, a5, t0  # Acha o caractére equivalente em hexadecimal
+            add t1, a5, t0  # Acha o endereço do caractére equivalente em hexadecimal
+            lb t1, 0(t1)    # Carrega esse caractére
             sb t1, 0(a1)    # Armazena o caractére em hexadecimal na string
             addi a4, a4, 1  # Avança em qual caractére foi inserido
             li a7, 1    # Marca que já começou a alocação dos bytes dessa base
+            addi a1, a1, 1  # Avança na string
 
         prox_itoa:
-            addi a1, a1, 1  # Avança na string
             addi a6, a6, -4 # Shift de 4 em 4 bits para leitura de hexadecimal em loop
             j base_16_itoa
 
