@@ -1,4 +1,4 @@
-.data
+.rodata
     a: .word 1
     b: .word -2
     c: .half 3
@@ -26,7 +26,7 @@ operation:
     lw a1, 0(t0)
     # Armazena short c = 3
     la t0, c
-    lh a2, 0(t0)
+    lhu a2, 0(t0)
     # Armazena short d = -4
     la t0, d
     lh a3, 0(t0)
@@ -42,36 +42,36 @@ operation:
     # Armazena int h = -8
     la t0, h
     lw a7, 0(t0)
-    # A partir daqui usa a pilha para os parâmetros
-    # Armazena char i = 9
-    la t0, i
-    lb t1, 0(t0)
-    addi sp, sp -4
-    sw t1, 0(sp)
-    # Armazena j = -10
-    la t0, j
-    lb t1, 0(t0)
-    addi sp, sp -4
-    sw t1, 0(sp)
-    # Armazena short k = 11
-    la t0, k
-    lh t1, 0(t0)
-    addi sp, sp -4
-    sw t1, 0(sp)
-    # Armazena short l = -12
-    la t0, l
-    lh t1, 0(t0)
-    addi sp, sp -4
+    # A partir daqui usa a pilha para os parâmetros de trás pra frente
+    # Armazena int n = -14
+    la t0, n
+    lw t1, 0(t0)
+    addi sp, sp, -4
     sw t1, 0(sp)
     # Armazena int m = 13
     la t0, m
     lw t1, 0(t0)
-    addi sp, sp -4
+    addi sp, sp, -4
     sw t1, 0(sp)
-    # Armazena n = -14
-    la t0, n
-    lw t1, 0(t0)
-    addi sp, sp -4
+    # Armazena short l = -12
+    la t0, l
+    lh t1, 0(t0)
+    addi sp, sp, -4
+    sw t1, 0(sp)
+    # Armazena short k = 11
+    la t0, k
+    lhu t1, 0(t0)
+    addi sp, sp, -4
+    sw t1, 0(sp)
+    # Armazena j = -10
+    la t0, j
+    lb t1, 0(t0)
+    addi sp, sp, -4
+    sw t1, 0(sp)
+    # Armazena char i = 9
+    la t0, i
+    lbu t1, 0(t0)
+    addi sp, sp, -4
     sw t1, 0(sp)
     # Armazena o ra antes de chamar outra função
     addi sp, sp, -4
