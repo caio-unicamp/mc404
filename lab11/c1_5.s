@@ -1,0 +1,4 @@
+.text
+.globl operation
+
+operation:
