@@ -4,7 +4,7 @@
     hex: .byte '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 
 .text
-.globl puts, gets, atoi, itoa, exit, linked_list_search
+.globl puts, gets, atoi, itoa, exit, recursive_tree_search
 
 puts:
     li a2, 1    # Sempre vai printar byte a byte, economiza linhas
@@ -195,27 +195,148 @@ exit:   # a0 já possui o fd relativo ao código
     li a7, 93   # Syscall exit
     ecall
 
-linked_list_search:    # Implementação da função linked_list_search
-    li t4, 0    # Índice da linked-list começa em 0
+recursive_tree_search:    # Implementação da função linked_list_search
+    li t4, 1    # Profundidade da árvore começa em 1
+    li t5, 0    # Flag pra dizer se achou o valor
 
-    percorre_lista:
-        lw t0, 0(a0)    # Val1
-        lw t1, 4(a0)    # Val2
-        lw t2, 8(a0)    # Next
+    # Salva o ra na pilha para conseguir chamar recursivamente
+    addi sp, sp, -4
+    sw ra, 0(sp)
+    # Busca recursiva
+    jal percorre_arvore
+    # Recupera o valor de ra e o desempilha
+    lw ra, 0(sp)
+    addi sp, sp, 4
 
-        add t5, t0, t1  # Val1 + Val2
-        beq a1, t5, found   # Se achou um nó que a soma dos valores é meu input, encerra a busca
+    beqz t5, not_found  # Se não achou, vai retornar 0
+    mv a0, t6   # Se achou, recupera do registrador que tem o valor correto
+    ret
 
-        beqz t2, not_found    # Null-pointer, encerra a busca caso não exista próximo
+    not_found:  # Se não achou em nenhuma profundidade o valor procurado, retorna 0
+        li a0, 0
+        ret
 
-        addi t4, t4, 1 # Aumenta o índice
-        mv a0, t2   # Segue para o próximo nó
-        j percorre_lista
+    percorre_arvore:
+        lw t0, 0(a0)    # Val
+        lw t1, 4(a0)    # Left
+        lw t2, 8(a0)    # Right
 
+        beq a1, t0, found   # Se achou um nó que tem o valor do input, encerra a busca
+
+        # Armazena o valor de t0 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t0, 0(sp)
+        # Armazena o valor de t1 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t1, 0(sp)
+        # Armazena o valor de t2 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t2, 0(sp)
+
+        # Salva o ra na pilha para conseguir chamar recursivamente
+        addi sp, sp, -4
+        sw ra, 0(sp)
+        # Busca no nó à direita
+        jal direita
+
+        # Recupera o valor de ra e o desempilha
+        lw ra, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t2 e o desempilha
+        lw t2, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t1 e o desempilha
+        lw t1, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t0 e o desempilha
+        lw t0, 0(sp)
+        addi sp, sp, 4
+        
+        bnez t5, termina_dfs    # Se já achou, encerra a função
+        # Senão, segue para a busca no outro lado
+
+        # Armazena o valor de t0 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t0, 0(sp)
+        # Armazena o valor de t1 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t1, 0(sp)
+        # Armazena o valor de t2 na pilha para não perdê-lo
+        addi sp, sp, -4
+        sw t2, 0(sp)
+
+        # Salva o ra na pilha para conseguir chamar recursivamente
+        addi sp, sp, -4
+        sw ra, 0(sp)
+        # Busca no nó à esquerda
+        jal esquerda
+        # Recupera o valor de ra e o desempilha
+        lw ra, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t2 e o desempilha
+        lw t2, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t1 e o desempilha
+        lw t1, 0(sp)
+        addi sp, sp, 4
+        # Recupera o valor de t0 e o desempilha
+        lw t0, 0(sp)
+        addi sp, sp, 4
+        
+    termina_dfs:
+        ret
+        
+    direita:
+        beqz t2, null_pointer # Se for um ponteiro nulo, não aumenta a profundidade e só retorna 
+
+        addi t4, t4, 1  # Senão, aumenta a profundidade e continua a busca
+        
+        mv t3, a0   # Salva o ponteiro atual 
+        mv a0, t2   # Passa para o nó da direita
+        # Salva o ra na pilha para conseguir chamar recursivamente
+        addi sp, sp, -4
+        sw ra, 0(sp)
+        # Busca recursiva
+        jal percorre_arvore
+        # Recupera o valor de ra e o desempilha
+        lw ra, 0(sp)
+        addi sp, sp, 4
+
+        bnez t5, termina_dfs    # Se achou, encerra
+        # Senão, volta para a profundidade anterior
+        addi t4, t4, -1
+        mv a0, t3   # Recupera o ponteiro do nó anterior
+        
+        ret
+
+    esquerda:
+        beqz t1, null_pointer # Se for um ponteiro nulo, não aumenta a profundidade e só retorna
+
+        addi t4, t4, 1  # Senão, aumenta a profundidade e continua a busca
+        
+        mv t3, a0   # Salva o ponteiro atual
+        mv a0, t1   # Passa para o nó da esquerda
+        # Salva o ra na pilha para conseguir chamar recursivamente
+        addi sp, sp, -4
+        sw ra, 0(sp)
+        # Busca recursiva
+        jal percorre_arvore
+        # Recupera o valor de ra e o desempilha
+        lw ra, 0(sp)
+        addi sp, sp, 4
+
+        bnez t5, termina_dfs    # Se achou, encerra
+        # Senão, volta para a profundidade anterior
+        addi t4, t4, -1
+        mv a0, t3   # Recupera o ponteiro do nó anterior
+
+        ret
+
+    null_pointer:
+        ret
+        
     found:
-        mv a0, t4   # Salva em qual índice achou e retorna ele
+        mv t6, t4   # Salva em qual profundidade achou em um registrador temporário para não sujar o a0
+        li t5, 1    # Avisa que achou
         ret
 
-    not_found:  # Se não achou nenhum índice que contenha a soma retorna -1
-        li a0, -1
-        ret
