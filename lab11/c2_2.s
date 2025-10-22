@@ -24,6 +24,7 @@ middle_value_short:
 
     lw a0, (t0)
     ret
+
 middle_value_char:
     mv t1, a1
     li t2, 2
@@ -33,5 +34,19 @@ middle_value_char:
     lw a0, (t0)
 
     ret
+
 value_matrix:
+    mv t0, a1   # int r
+    mv t1, a2   # int c
+    li t2, 4    # int avança de 4 em 4 bytes
+    mul t0, t0, t2 
+    mul t1, t1, t2
+    li t2, 42
+    mul t0, t0, t2
+    # m[12][42]
+    # m[r][c] = 4*42*r + 4*c
+    add t2, a0, t0
+    add t2, t2, t1
+
+    lw a0, 0(t2) 
     ret
