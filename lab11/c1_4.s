@@ -13,4 +13,3 @@ operation:
     sub a0, a0, t0  # a0 = b + c - f + h + k - m 
 
     ret 
-    
