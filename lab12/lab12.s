@@ -10,20 +10,37 @@
 
 _start:
     li s0, base # Endereço base está salvo em s0
-    li s1, 1000
+
+vrum_vrum:
+    li t0, 1
+    sb t0, gps(s0)
+
+    lw a0, x(s0)
+    lw a1, z(s0)
+
+    jal ra, calcula_dist
+
     li t0, -15
     sb t0, volante(s0)  # Vira o volante 15 para a esquerda
 
     li t0, 1
     sb t0, engine(s0)   # Liga o motor
-    bnez s1, _start
-# vrum_vrum:
-#     lw a0, x(s0)
-#     lw a1, z(s0)
+    
+    li t0, 225
+    bge a0, t0, vrum_vrum   # Enquanto a distância do carro pro ponto final for maior que 15, continua no loop
 
-# exit:   # Encerra o programa
-#     li a0, 0
-#     li a7, 93
-#     ecall
+exit:   # Encerra o programa quando chegou o final
+    li a0, 0
+    li a7, 93
+    ecall
 
-# calcula_dist:
+calcula_dist:   # Função pra calcular a distância ao quadrado entre o carro e o final
+    addi a0, a0, 73 # x - xf
+    mul a0, a0, a0  # (x - xf)²
+
+    addi a1, a1, -19    # z - zf
+    mul a1, a1, a1  # (z - zf)²
+
+    add a0, a0, a1  # a0 = d² = (x - xf)² + (y - yf)²
+
+    ret
