@@ -26,7 +26,7 @@ operation:
     lw a1, 0(t0)
     # Armazena short c = 3
     la t0, c
-    lhu a2, 0(t0)
+    lh a2, 0(t0)
     # Armazena short d = -4
     la t0, d
     lh a3, 0(t0)
@@ -43,6 +43,9 @@ operation:
     la t0, h
     lw a7, 0(t0)
     # A partir daqui usa a pilha para os parâmetros de trás pra frente
+    # Armazena o ra antes de chamar outra função
+    addi sp, sp, -8
+    sw ra, 0(sp)
     # Armazena int n = -14
     la t0, n
     lw t1, 0(t0)
@@ -60,26 +63,23 @@ operation:
     sw t1, 0(sp)
     # Armazena short k = 11
     la t0, k
-    lhu t1, 0(t0)
+    lh t1, 0(t0)
     addi sp, sp, -4
     sw t1, 0(sp)
-    # Armazena j = -10
+    # Armazena char j = -10
     la t0, j
     lb t1, 0(t0)
     addi sp, sp, -4
     sw t1, 0(sp)
     # Armazena char i = 9
     la t0, i
-    lbu t1, 0(t0)
+    lb t1, 0(t0)
     addi sp, sp, -4
     sw t1, 0(sp)
-    # Armazena o ra antes de chamar outra função
-    addi sp, sp, -4
-    sw ra, 0(sp)
 
     jal mystery_function
     # Recupera o valor de ra e o desempilha, além de desempilhar todos os outros valores que não serão mais usados
-    lw ra, 0(sp)
-    addi sp, sp, 28
+    lw ra, 24(sp)
+    addi sp, sp, 32
     # Como o a0 já armazenou o retorno da mystery_function basta retornar para onde a função operation foi chamada
     ret
