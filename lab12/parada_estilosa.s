@@ -28,11 +28,7 @@ vrum_vrum:
     sb t0, motor(s0)   # Liga o motor
     
     li t0, 1500
-    bge a0, t0, vrum_vrum   # Enquanto a distância do carro pro ponto final for maior que 15, continua no loop
-
-    li t0, -127
-    sb t0, volante(s0)
-
+    bge a0, t0, vrum_vrum   # Continua no loop até um dado momento
 
     li t1, 1800
     drift_insano:
@@ -40,7 +36,7 @@ vrum_vrum:
         sb t0, volante(s0)
 
         li t0, 1
-        sb t0, motor(s0)   # Desliga o motor pra parar
+        sb t0, motor(s0) 
 
         li t0, 1
         sb t0, freio(s0)    # Puxa o freio de mão pra encerrar com um drift
