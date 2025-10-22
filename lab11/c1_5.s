@@ -12,14 +12,16 @@ operation:
     sw a0, 20(sp)   # Armazena a
     sw ra, 24(sp)   # Armazena o ra antes de pular para a chamada
 
-    lw a0, 32(sp)   # Carrega em a0 o n
-    lw a1, 36(sp)   # Carrega em a1 o m
-    lw a2, 40(sp)   # Carrega em a2 o l
-    lw a3, 44(sp)   # Carrega em a3 o k
-    lw a4, 48(sp)   # Carrega em a4 o j
-    lw a5, 52(sp)   # Carrega em a5 o i
-    lw a6, 56(sp)   # Carrega em a6 o h
-    lw a7, 60(sp)   # Carrega em a7 o g
+    lw a0, 52(sp)   # Carrega em a0 o n
+    lw a1, 48(sp)   # Carrega em a1 o m
+    lw a2, 44(sp)   # Carrega em a2 o l
+    lw a3, 40(sp)   # Carrega em a3 o k
+    lw a4, 36(sp)   # Carrega em a4 o j
+    lw a5, 32(sp)   # Carrega em a5 o i
+    mv t0, a7   # Carrega em t0 o h
+    mv a7, a6   # Carrega em a7 o g
+    mv a6, t0   # Carrega em a6 o h
+
 
     jal mystery_function
     
