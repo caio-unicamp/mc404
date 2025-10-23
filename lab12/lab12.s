@@ -27,29 +27,14 @@ vrum_vrum:
     li t0, 1
     sb t0, motor(s0)   # Liga o motor
     
-    li t0, 1500
+    li t0, 225
     bge a0, t0, vrum_vrum   # Enquanto a distância do carro pro ponto final for maior que 15, continua no loop
-
-    li t0, -127
-    sb t0, volante(s0)
-
-
-    li t1, 1800
-    drift_insano:
-        li t0, -127
-        sb t0, volante(s0)
-
-        li t0, 1
-        sb t0, motor(s0)   # Desliga o motor pra parar
-
-        li t0, 1
-        sb t0, freio(s0)    # Puxa o freio de mão pra encerrar com um drift
-
-        addi t1, t1, -1
-        bnez t1, drift_insano
 
     li t0, 0
     sb t0, motor(s0)    # Desliga o motor pra parar
+
+    li t0, 1
+    sb t0, freio(s0)    # Freia completamente
 
 exit:   # Encerra o programa quando chegou o final
     li a0, 0
