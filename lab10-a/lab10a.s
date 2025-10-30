@@ -77,22 +77,22 @@ atoi:
 
         # Ignora whitespaces
         li t1, ' '
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
 
         li t1, '\t'
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
 
         li t1, '\n'
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
 
         li t1, '\v' 
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
 
         li t1, '\f'
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
 
         li t1, '\r'
-        beq t0, t1, loop_atoi
+        beq t0, t1, ignora_whitespace_atoi
         # Se for negativo, marca
         li t1, '-'
         beq t0, t1, marca_neg_atoi
@@ -113,6 +113,10 @@ atoi:
     termina_atoi:
         mul a0, a5, a4  # Múltiplica pelo sinal do número
         ret # Retorna pra onde foi chamada
+
+    ignora_whitespace_atoi:
+        addi a0, a0, 1  # Segue para o próximo número ignorando whitespace
+        j loop_atoi
 
 itoa:
     mv a3, a1   # Salva o começo da string em a3
