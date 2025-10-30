@@ -10,6 +10,7 @@ _start:
     li s0, base # Salva a memória da base em s0
     li t0, 1
     sb t0, read(s0) # Começa a leitura
+    li s1, 0    # Tamanho da string a ser printada
 
 leitura:
     jal ra, espera_leitura
@@ -27,16 +28,14 @@ leitura:
 
     li t0, '3'
     beq t0, t1, operacao_3
-    
-    j exit
-    
+# Se não for nenhum dos anteriores é a operação 4   
 operacao_4: # Printa uma operação entre 2 números 
 
 operacao_1: # Printa a própria string
     li t0, 1
     sb t0, read(s0) # Dá trigger para ler o próximo caractére
     jal ra, espera_leitura
-    lbu t1, read_byte(s0)   # Armazena o caractére lido em t0
+    lbu t1, read_byte(s0)   # Armazena o caractére lido em t1
 
     sb t1, written_byte(s0) # Armazena qual caractére deve ser printado
     li t0, 1
@@ -49,6 +48,39 @@ operacao_1: # Printa a própria string
     j exit  # Se leu a quebra de linha simplesmente sai pois já printou tudo
 
 operacao_2: # Printa a string invertida
+    li t0, 1
+    sb t0, read(s0) # Dá trigger para ler o próximo caractére
+    jal ra, espera_leitura
+    lbu t1, read_byte(s0)   # Armazena o caractére lido em t1
+    li t0, '\n'
+    beq t0, t1, loop_print_op2  # Caso leia uma quebra de linha finaliza a leitura e inicia o print
+    addi sp, sp, -1 
+
+    # Senão, armazena o caractere lido no stack pointer
+    sb t1, 0(sp)
+    addi s1, s1, 1  # Aumenta o tamanho da string
+
+    j operacao_2
+
+    loop_print_op2:
+        lbu t1, 0(sp)   # Carrega o caractére lido de trás pra frente do stack pointer
+        sb t1, written_byte(s0) # Armazena qual caractére deve ser printado
+        li t0, 1
+        sb t0, write(s0)    # Dá trigger pra printar o próximo caractére
+        jal ra, espera_escrita
+        
+        addi s1, s1, -1 # Diminui o quanto ainda precisa ser printado da string
+        addi sp, sp, 1  # Desempilha o caractére lido
+
+        bnez s1, loop_print_op2  # Enquanto s1 for maior que 0 continua o print
+    # Printa o \n final
+    li t0, '\n'
+    sb t0, written_byte(s0)
+    li t0, 1
+    sb t0, write(s0)
+    jal ra, espera_escrita
+        
+    j exit  # Se leu a quebra de linha simplesmente sai pois já printou tudo
 
 operacao_3: # Printa o número lido convertendo pra hexa
 
