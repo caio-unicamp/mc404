@@ -1,3 +1,6 @@
+.rodata
+    hex: .byte '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+
 .text
 .set base, 0xFFFF0100
 .set write, 0x0
@@ -11,6 +14,7 @@ _start:
     li t0, 1
     sb t0, read(s0) # Começa a leitura
     li s1, 0    # Tamanho da string a ser printada
+    mv s2, a0   # O a0 vai ser usado para salvar uma string de caractéres numéricos avançando byte a byte, então s2 armazena o início dessa string
 
 leitura:
     jal ra, espera_leitura
@@ -83,7 +87,47 @@ operacao_2: # Printa a string invertida
     j exit  # Se leu a quebra de linha simplesmente sai pois já printou tudo
 
 operacao_3: # Printa o número lido convertendo pra hexa
+    li t0, 1
+    sb t0, read(s0) # Dá trigger para ler o próximo caractére
+    jal ra, espera_leitura
 
+    lbu t1, read_byte(s0)   # Armazena o caractére lido em t1
+    sb t1, 0(a0)    # Armazena o caractére atual em a0 que irá salvar a string do número
+    addi a0, a0, 1  # Avança para salvar o próximo caractére
+
+    li t0, '\n'
+    bne t0, t1, operacao_3  # Enquanto não ler uma quebra de linha continua a leitura
+
+    mv a0, s2   # Recupera o início da string
+
+    addi sp, sp, -4
+    sw ra, 0(sp)    # Salva o ra antes de pular para outra rotina
+    jal atoi    # Pula para a função que transforma uma string para inteiro decimal retornando o mesmo em a0
+
+    lw ra, 0(sp)    # Recupera o ra e o desempilha
+    addi sp, sp, 4  
+
+    li a2, 16   # Base hexadecimal
+
+    addi sp, sp, -4
+    sw ra, 0(sp)    # Salva o ra antes de pular para outra rotina
+    jal itoa    # Pula para a função que transforma um inteiro para uma string alterando a base dele para hexadecimal e retornando isso em a0
+
+    lw ra, 0(sp)    # Recupera o ra e o desempilha
+    addi sp, sp, 4
+
+    loop_print_op3:
+        lbu t1, 0(a0)   # Carrega o dígito atual em t1
+        sb t1, written_byte(s0) # Armazena qual dígito deve ser printado
+        li t0, 1
+        sb t0, write(s0)    # Dá trigger pra printar o próximo caractére
+        jal ra, espera_escrita
+        
+        addi a0, a0, 1
+        li t2, '\n'
+        bne t1, t2, loop_print_op3  # Enquanto não tiver printado a quebra de linha, continua
+
+    j exit  # Se leu a quebra de linha simplesmente sai pois já printou tudo
 
 exit:
     li a0, 0    # fd = 0
@@ -99,126 +143,129 @@ espera_leitura:
     lbu t3, read(s0)
     bnez t3, espera_leitura
     ret
-# atoi:
-#     li a4, 1    # Flag para saber se o número é negativo
-#     li a5, 0    # Acumulador para número que será retornado
 
-#     loop_atoi:
-#         lbu t0, 0(a0)
-#         beqz t0, termina_atoi   # Encerra em \0
+atoi:
+    li a4, 1    # Flag para saber se o número é negativo
+    li a5, 0    # Acumulador para número que será retornado
 
-#         # Ignora whitespaces
-#         li t1, ' '
-#         beq t0, t1, loop_atoi
+    loop_atoi:
+        lbu t0, 0(a0)
+        li t1, '\n'
+        beq t0, t1, termina_atoi   # Encerra em \n
 
-#         li t1, '\t'
-#         beq t0, t1, loop_atoi
+        # # Ignora whitespaces
+        # li t1, ' '
+        # beq t0, t1, loop_atoi
 
-#         li t1, '\n'
-#         beq t0, t1, loop_atoi
+        # li t1, '\t'
+        # beq t0, t1, loop_atoi
 
-#         li t1, '\v'
-#         beq t0, t1, loop_atoi
+        # li t1, '\n'
+        # beq t0, t1, loop_atoi
 
-#         li t1, '\f'
-#         beq t0, t1, loop_atoi
+        # li t1, '\v'
+        # beq t0, t1, loop_atoi
 
-#         li t1, '\r'
-#         beq t0, t1, loop_atoi
-#         # Se for negativo, marca
-#         li t1, '-'
-#         beq t0, t1, marca_neg_atoi
-#         # Se chegou até aqui, leu um dígito
-#         addi t0, t0, -'0'   # Transforma de str pra int
-#         li t1, 10
-#         mul a5, a5, t1
-#         add a5, a5, t0
+        # li t1, '\f'
+        # beq t0, t1, loop_atoi
 
-#         addi a0, a0, 1  # Avança no ponteiro da string para seguir na leitura
-#         j loop_atoi
+        # li t1, '\r'
+        # beq t0, t1, loop_atoi
+        # Se for negativo, marca
+        li t1, '-'
+        beq t0, t1, marca_neg_atoi
+        # Se chegou até aqui, leu um dígito
+        addi t0, t0, -'0'   # Transforma de str pra int
+        li t1, 10
+        mul a5, a5, t1
+        add a5, a5, t0
 
-#     marca_neg_atoi:
-#         li a4, -1
-#         addi a0, a0, 1  # Pula para o próximo byte de leitura
-#         j loop_atoi
+        addi a0, a0, 1  # Avança no ponteiro da string para seguir na leitura
+        j loop_atoi
 
-#     termina_atoi:
-#         mul a0, a5, a4  # Múltiplica pelo sinal do número
-#         ret # Retorna pra onde foi chamada
+    marca_neg_atoi:
+        li a4, -1
+        addi a0, a0, 1  # Pula para o próximo byte de leitura
+        j loop_atoi
 
-# itoa:
-#     mv a3, a1   # Salva o começo da string em a3
-#     li a4, 0    # Salva quantos bytes vão ser armazenados em a3 para recuperar de sp
+    termina_atoi:
+        mul a0, a5, a4  # Múltiplica pelo sinal do número
+        ret # Retorna pra onde foi chamada
 
-#     li t0, 10
-#     beq a2, t0, confere_neg_itoa
-#     # Se não for base 10, será base hexadecimal
-#     la a5, hex  # Vetor dos caracteres de hexadecimal
-#     li a6, 28   # Shift inicial
-#     li a7, 0    # Flag para indicar se já começou a colocar os números na base hexa
-#     j base_16_itoa
+itoa:
+    mv a3, a1   # Salva o começo da string em a3
+    li a4, 0    # Salva quantos bytes vão ser armazenados em a3 para recuperar de sp
 
-#     confere_neg_itoa:
-#         bge a0, x0, base_10_itoa
+    li t0, 10
+    beq a2, t0, confere_neg_itoa
+    # Se não for base 10, será base hexadecimal
+    la a5, hex  # Vetor dos caracteres de hexadecimal
+    li a6, 28   # Shift inicial
+    li a7, 0    # Flag para indicar se já começou a colocar os números na base hexa
+    j base_16_itoa
 
-#     marca_neg_itoa: # Marca que o número é negativo
-#         li t0, '-'
-#         sb t0, 0(a1)
-#         addi a1, a1, 1
+    confere_neg_itoa:
+        bge a0, x0, base_10_itoa
 
-#         sub a0, x0, a0  # Transforma o valor em positivo
+    marca_neg_itoa: # Marca que o número é negativo
+        li t0, '-'
+        sb t0, 0(a1)
+        addi a1, a1, 1
 
-#     base_10_itoa:
-#         li t1, 10
-#         rem t0, a0, t1  # Checa o resto da divisão de a0 por 10
-#         addi t0, t0, '0'    # Transforma de int pra str
+        sub a0, x0, a0  # Transforma o valor em positivo
 
-#         addi sp, sp, -1 # Usa sp para armazenar os bytes de dígitos em a1
-#         sb t0, 0(sp)    # Armazena o dígito atual em sp
+    base_10_itoa:
+        li t1, 10
+        rem t0, a0, t1  # Checa o resto da divisão de a0 por 10
+        addi t0, t0, '0'    # Transforma de int pra str
 
-#         addi a4, a4, 1  # Marca que salvou mais um dígito
-#         div a0, a0, t1  # Divide o valor de a0 por 10 para ler o próximo dígito
+        addi sp, sp, -1 # Usa sp para armazenar os bytes de dígitos em a1
+        sb t0, 0(sp)    # Armazena o dígito atual em sp
 
-#         bnez a0, base_10_itoa   # Continua enquanto a0 > 0
+        addi a4, a4, 1  # Marca que salvou mais um dígito
+        div a0, a0, t1  # Divide o valor de a0 por 10 para ler o próximo dígito
 
-#         j armazena_itoa # Se a0 for 0 termina o loop
+        bnez a0, base_10_itoa   # Continua enquanto a0 > 0
 
-#     base_16_itoa:
-#         bltz a6, termina_itoa   # Se o shift for 0, encerra
+        j armazena_itoa # Se a0 for 0 termina o loop
 
-#         srl t0, a0, a6  # t0 = a0 >> a6(shift)
-#         andi t0, t0, 0xF # Pega apenas os 4 bits da direita
+    base_16_itoa:
+        bltz a6, termina_itoa   # Se o shift for < 0, encerra
 
-#         bnez t0, coloca_itoa_hex    # Se t0 != 0 coloca no buffer
-#         beqz a6, coloca_itoa_hex # Se o shift for 0 coloca no buffer
-#         bnez a7, coloca_itoa_hex    # Se já começou a colocar no buffer
-#         j prox_itoa
+        srl t0, a0, a6  # t0 = a0 >> a6(shift)
+        andi t0, t0, 0xF # Pega apenas os 4 bits da direita
 
-#         coloca_itoa_hex:
-#             add t1, a5, t0  # Acha o endereço do caractére equivalente em hexadecimal
-#             lb t1, 0(t1)    # Carrega esse caractére
-#             sb t1, 0(a1)    # Armazena o caractére em hexadecimal na string
-#             addi a4, a4, 1  # Avança em qual caractére foi inserido
-#             li a7, 1    # Marca que já começou a alocação dos bytes dessa base
-#             addi a1, a1, 1  # Avança na string
+        bnez t0, coloca_itoa_hex    # Se t0 != 0 coloca no buffer
+        beqz a6, coloca_itoa_hex # Se o shift for 0 coloca no buffer
+        bnez a7, coloca_itoa_hex    # Se já começou a colocar no buffer
+        j prox_itoa
 
-#         prox_itoa:
-#             addi a6, a6, -4 # Shift de 4 em 4 bits para leitura de hexadecimal em loop
-#             j base_16_itoa
+        coloca_itoa_hex:
+            add t1, a5, t0  # Acha o endereço do caractére equivalente em hexadecimal
+            lb t1, 0(t1)    # Carrega esse caractére
+            sb t1, 0(a1)    # Armazena o caractére em hexadecimal na string
+            addi a4, a4, 1  # Avança em qual caractére foi inserido
+            li a7, 1    # Marca que já começou a alocação dos bytes dessa base
+            addi a1, a1, 1  # Avança na string
 
-#     armazena_itoa:
-#         beqz a4, termina_itoa
-#         # Carrega o dígito a ser inserio na string e o desempilha
-#         lb t0, 0(sp)
-#         addi sp, sp, 1
-#         # Armazena o dígito na string e passa para a próxima posição
-#         sb t0, 0(a1)
-#         addi a1, a1, 1
+        prox_itoa:
+            addi a6, a6, -4 # Shift de 4 em 4 bits para leitura de hexadecimal em loop
+            j base_16_itoa
 
-#         addi a4, a4, -1 # Diminui a quantidade de dígitos que devem ser colocados na string
-#         j armazena_itoa
+    armazena_itoa:
+        beqz a4, termina_itoa
+        # Carrega o dígito a ser inserio na string e o desempilha
+        lb t0, 0(sp)
+        addi sp, sp, 1
+        # Armazena o dígito na string e passa para a próxima posição
+        sb t0, 0(a1)
+        addi a1, a1, 1
 
-#     termina_itoa:
-#         sb x0, 0(a1)    # Armazena o \0 para indicar que acabou a string
-#         mv a0, a3   # Recupera o início da string para retorná-lo
-#         ret # Retorna pra quem a chamou
+        addi a4, a4, -1 # Diminui a quantidade de dígitos que devem ser colocados na string
+        j armazena_itoa
+
+    termina_itoa:
+        li t0, '\n'
+        sb t0, 0(a1)    # Armazena o \n para indicar que acabou a string
+        mv a0, a3   # Recupera o início da string para retorná-lo
+        ret # Retorna pra quem a chamou
