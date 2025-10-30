@@ -14,6 +14,7 @@ _start:
     li t0, 1
     sb t0, read(s0) # Começa a leitura
     li s1, 0    # Tamanho da string a ser printada
+    li a0, 0
     mv s2, a0   # O a0 vai ser usado para salvar uma string de caractéres numéricos avançando byte a byte, então s2 armazena o início dessa string
 
 leitura:
@@ -34,7 +35,111 @@ leitura:
     beq t0, t1, operacao_3
 # Se não for nenhum dos anteriores é a operação 4   
 operacao_4: # Printa uma operação entre 2 números 
+    li t0, 1
+    sb t0, read(s0) # Dá trigger para ler o próximo caractére
+    jal ra, espera_leitura
 
+    lbu t1, read_byte(s0)   # Armazena o caractére lido em t1
+    sb t1, 0(a0)    # Armazena o caractére atual em a0 que irá salvar a string do número
+    addi a0, a0, 1  # Avança para salvar o próximo caractére
+
+    li t0, ' '
+    beq t0, t1, operador  # Enquanto não ler um espaço (primeiro número) continua a leitura
+
+    li t0, '\n'
+    beq t0, t1, fim_op4  # Enquanto não ler uma quebra de linha (segundo número) continua a leitura
+    
+    j operacao_4
+    
+    operador:
+        # O primeiro número é encerrado por um ' ', mas atoi funciona ignorando whitespace e encerrando em \n, então insere um \n no fim antes de passar para a próxima rotina
+        li t0, '\n'
+        sb t0, 0(a0)
+
+        mv a0, s2   # Recupera o início da string
+
+        addi sp, sp, -4
+        sw ra, 0(sp)    # Salva o ra antes de pular para outra rotina
+        jal atoi    # Pula para a função que transforma uma string para inteiro decimal retornando o mesmo em a0
+
+        mv s3, a0   # Salva o primeiro número em s3 
+
+        li t0, 1
+        sb t0, read(s0) # Dá trigger para ler qual o operador
+        jal ra, espera_leitura
+
+        lbu s4, read_byte(s0)   # Armazena o operador em s4 
+
+        li t0, 1
+        sb t0, read(s0) # Dá trigger para ignorar o espaço entre o operador e o próximo número
+        jal ra, espera_leitura
+
+        li a0, 0    # Reseta o buffer
+
+        j operacao_4    # Volta para ler o próximo número
+
+    fim_op4:
+        mv a0, s2   # Recupera o início da string
+
+        addi sp, sp, -4
+        sw ra, 0(sp)    # Salva o ra antes de pular para outra rotina
+        jal atoi    # Pula para a função que transforma uma string para inteiro decimal retornando o mesmo em a0
+
+        mv s5, a0   # Salva o segundo número em s5
+
+        li t0, '+'
+        beq s4, t0, soma
+
+        li t0, '-'
+        beq s4, t0, subtrai
+
+        li t0, '/'
+        beq s4, t0, divide
+
+        li t0, '*'
+        beq s4, t0, multiplica
+
+        soma:
+            add a0, s3, s5  # a0 = s3 + s5
+
+            j transforma_num_op4
+        subtrai:
+            sub a0, s3, s5  # a0 = s3 - s5
+
+            j transforma_num_op4
+        divide:
+            div a0, s3, s5  # a0 = s3 / s5
+
+            j transforma_num_op4
+
+        multiplica:
+            mul a0, s3, s5  # a0 = s3 * s5
+
+            j transforma_num_op4
+
+        transforma_num_op4:
+            li a2, 10
+            addi sp, sp, -4
+            sw ra, 0(sp)    # Armazena o ra antes de chamar uma rotina
+
+            jal itoa    # Pula para a função que transforma um inteiro para uma string e retorna isso em a0
+
+
+            lw ra, 0(sp)    # Recupera o ra e o desempilha
+            addi sp, sp, 4
+
+        loop_print_op4:
+            lbu t1, 0(a0)   # Carrega o dígito atual em t1
+            sb t1, written_byte(s0) # Armazena qual dígito deve ser printado
+            li t0, 1
+            sb t0, write(s0)    # Dá trigger pra printar o próximo caractére
+            jal ra, espera_escrita
+            
+            addi a0, a0, 1
+            li t2, '\n'
+            bne t1, t2, loop_print_op4  # Enquanto não tiver printado a quebra de linha, continua
+
+    j exit
 operacao_1: # Printa a própria string
     li t0, 1
     sb t0, read(s0) # Dá trigger para ler o próximo caractére
@@ -153,25 +258,10 @@ atoi:
         li t1, '\n'
         beq t0, t1, termina_atoi   # Encerra em \n
 
-        # # Ignora whitespaces
-        # li t1, ' '
-        # beq t0, t1, loop_atoi
+        # Ignora whitespace
+        li t1, ' '
+        beq t0, t1, ignora_whitespace_atoi
 
-        # li t1, '\t'
-        # beq t0, t1, loop_atoi
-
-        # li t1, '\n'
-        # beq t0, t1, loop_atoi
-
-        # li t1, '\v'
-        # beq t0, t1, loop_atoi
-
-        # li t1, '\f'
-        # beq t0, t1, loop_atoi
-
-        # li t1, '\r'
-        # beq t0, t1, loop_atoi
-        # Se for negativo, marca
         li t1, '-'
         beq t0, t1, marca_neg_atoi
         # Se chegou até aqui, leu um dígito
@@ -191,6 +281,10 @@ atoi:
     termina_atoi:
         mul a0, a5, a4  # Múltiplica pelo sinal do número
         ret # Retorna pra onde foi chamada
+
+    ignora_whitespace_atoi:
+        addi a0, a0, 1  # Segue para o próximo número ignorando whitespace
+        j loop_atoi
 
 itoa:
     mv a3, a1   # Salva o começo da string em a3
