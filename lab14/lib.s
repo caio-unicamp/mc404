@@ -20,18 +20,20 @@ isr_stack_end:  # Base da pilha de ISR
 .set vel_nota, 0x05
 .set dur_nota, 0x06
 
-.globl _start, main, play_note, _system_time
+.globl _start, play_note, _system_time
 
 _start: # Inicializa sp, seta interrupções e chama a função main
     la sp, stack_pointer    # Inicializa o final da stack pointer
+    addi sp, sp, 1024   # Vai para o topo da pilha
+
     li s0, base_gpt # Memória base do GPT está em s0
     li s1, base_synthesizer # Memória base do synthesizer está em s1
     la s2, _system_time # Carrega o tempo em s2
     
     # Setando interrupções
     # Registrando a ISR por direct mode
-    la t0, main_isr # Carrega o endereço da main_isr
-    csrw mtvec, t0 # em mtvec
+    la t0, main_isr # Carrega o endereço da main_isr em mtvec
+    csrw mtvec, t0 
 
     # Configura mscratch com o topo da pilha das ISRs.
     la t0, isr_stack_end # t0 <= base da pilha
@@ -39,16 +41,14 @@ _start: # Inicializa sp, seta interrupções e chama a função main
 
     # Configura GPT
     li t0, 100
-    sw temp_interromper(s0) # Interrompe a cada 100ms
-    li t0, 1
-    sb t0, read_sys_time(s0)    # habilita interrupções do GPT
+    sw t0, temp_interromper(s0) # Interrompe a cada 100ms
 
     # Habilita interrupções externas
     csrr t1, mie # Seta o bit 11 (MEIE)
     li t2, 0x800 # do registrador mie
     or t1, t1, t2
     csrw mie, t1
-    # Habilita Interrupções Global
+    # Habilita interrupções globais
     csrr t1, mstatus # Seta o bit 3 (MIE)
     ori t1, t1, 0x8 # do registrador mstatus
     csrw mstatus, t1
@@ -57,7 +57,7 @@ _start: # Inicializa sp, seta interrupções e chama a função main
     sw ra, 0(sp)    # Salva o ra antes de chamar a main
     jal main
 
-exit:
+exit:   # Encerra o programa
     li a0, 0    # fd = 0 
     li a7, 93   # Exit syscall
     ecall
@@ -70,13 +70,6 @@ play_note:  # void play_note(int ch, int inst, int note, int vel, int dur)
     sh a4, dur_nota(s1) # Armazena o short referente à duração da nota
 
     sb a0, chanel(s1)   # Armazena o byte referente ao canal em que será tocada a nota MIDI
-    ret
-
-espera_gpt:
-    lbu t0, read_sys_time(s0)
-    li t1, 0
-    bne t0, t1, espera_gpt  # Enquanto o registrador não apontar que finalizou a leitura continua esperando
-
     ret
 
 main_isr:
@@ -96,10 +89,9 @@ main_isr:
     addi t1, t1, 100
     sw t1, 0(t0)
 
-    # Limpa flag de interrupção do GPT
-    li t2, base_gpt
-    li t3, 0
-    sb t3, read_sys_time(t2)
+    # Reprograma GPT
+    li t3, 100
+    sw t3, temp_interromper(s1)
 
     # Restaura contexto
     lw t0, 0(sp)
