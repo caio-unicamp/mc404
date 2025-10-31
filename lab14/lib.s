@@ -4,7 +4,6 @@
     .align 4
     stack_pointer: .space 1024 
     isr_stack: .space 1024
-isr_stack_end:  # Base da pilha de ISR
 
 
 .text
@@ -36,7 +35,7 @@ _start: # Inicializa sp, seta interrupções e chama a função main
     csrw mtvec, t0 
 
     # Configura mscratch com o topo da pilha das ISRs.
-    la t0, isr_stack_end # t0 <= base da pilha
+    la t0, isr_stack # t0 <= base da pilha
     csrw mscratch, t0 # mscratch <= t0
 
     # Configura GPT
@@ -91,7 +90,7 @@ main_isr:
 
     # Reprograma GPT
     li t3, 100
-    sw t3, temp_interromper(s1)
+    sw t3, temp_interromper(s0)
 
     # Restaura contexto
     lw t0, 0(sp)
