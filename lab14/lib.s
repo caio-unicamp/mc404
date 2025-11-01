@@ -31,7 +31,7 @@ _start: # Inicializa sp, seta interrupções e chama a função main
     
     # Setando interrupções
     # Registrando a ISR por direct mode
-    la t0, main_isr # Carrega o endereço da main_isr em mtvec
+    la t0, gpt_isr # Carrega o endereço da gpt_isr em mtvec
     csrw mtvec, t0 
 
     # Configura mscratch com o topo da pilha das ISRs.
@@ -72,7 +72,7 @@ play_note:  # void play_note(int ch, int inst, int note, int vel, int dur)
     sb a0, chanel(s1)   # Armazena o byte referente ao canal em que será tocada a nota MIDI
     ret
 
-main_isr:
+gpt_isr:
     # Troca de pilha
     csrrw sp, mscratch, sp      # troca pilha normal <-> pilha de ISR
 
