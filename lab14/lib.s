@@ -36,11 +36,12 @@ _start: # Inicializa sp, seta interrupções e chama a função main
 
     # Configura mscratch com o topo da pilha das ISRs.
     la t0, isr_stack # t0 <= base da pilha
+    addi t0, t0, 1024   # Vai pro topo da pilha do ISR
     csrw mscratch, t0 # mscratch <= t0
 
     # Configura GPT
-    li t0, 100
-    sw t0, temp_interromper(s0) # Interrompe a cada 100ms
+    li t0, 361
+    sw t0, temp_interromper(s0) # Interrompe a cada 361ms
 
     # Habilita interrupções externas
     csrr t1, mie # Seta o bit 11 (MEIE)
@@ -85,12 +86,13 @@ main_isr:
     # Incrementa o tempo global
     la t0, _system_time
     lw t1, 0(t0)
-    addi t1, t1, 100
+    addi t1, t1, 361
     sw t1, 0(t0)
 
     # Reprograma GPT
-    li t3, 100
-    sw t3, temp_interromper(s0)
+    li t2, base_gpt
+    li t3, 361
+    sw t3, temp_interromper(t2)
 
     # Restaura contexto
     lw t0, 0(sp)
